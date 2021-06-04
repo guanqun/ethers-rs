@@ -58,6 +58,9 @@ pub struct Abigen {
     /// Derives added to event structs and enums.
     event_derives: Vec<String>,
 
+    /// Whether to generate a function to decode input or not.
+    decode_input: bool,
+
     /// Format the code using a locally installed copy of `rustfmt`.
     rustfmt: bool,
 }
@@ -71,6 +74,7 @@ impl Abigen {
             contract_name: contract_name.to_owned(),
             method_aliases: HashMap::new(),
             event_derives: Vec::new(),
+            decode_input: false,
             rustfmt: true,
         })
     }
@@ -84,6 +88,12 @@ impl Abigen {
         S2: Into<String>,
     {
         self.method_aliases.insert(signature.into(), alias.into());
+        self
+    }
+
+    /// Specify whether or not to generate decode input functions.
+    pub fn decode_input(mut self, decode_input: bool) -> Self {
+        self.decode_input = decode_input;
         self
     }
 

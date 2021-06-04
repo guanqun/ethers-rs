@@ -236,6 +236,15 @@ impl<M: Middleware> Contract<M> {
         })
     }
 
+    /// Decodes the provided ABI encoded bytes with the selected function selector
+    pub fn decode_with_selector<D: Detokenize, T: AsRef<[u8]>>(
+        &self,
+        signature: Selector,
+        bytes: T,
+    ) -> Result<D, AbiError> {
+        self.base_contract.decode_with_selector(signature, bytes)
+    }
+
     /// Returns a new contract instance at `address`.
     ///
     /// Clones `self` internally

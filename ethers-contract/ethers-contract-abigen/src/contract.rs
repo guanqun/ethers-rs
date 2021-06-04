@@ -41,6 +41,9 @@ pub(crate) struct Context {
 
     /// Derives added to event structs and enums.
     event_derives: Vec<Path>,
+
+    /// Whether to generate a function to decode input or not.
+    decode_input: bool,
 }
 
 impl Context {
@@ -134,6 +137,8 @@ impl Context {
             }
         }
 
+        let decode_input = args.decode_input;
+
         let event_derives = args
             .event_derives
             .iter()
@@ -149,6 +154,7 @@ impl Context {
             contract_name,
             method_aliases,
             event_derives,
+            decode_input,
         })
     }
 }

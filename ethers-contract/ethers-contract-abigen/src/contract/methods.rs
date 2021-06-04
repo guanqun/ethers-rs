@@ -47,12 +47,26 @@ fn expand_function(function: &Function, alias: Option<Ident>) -> Result<TokenStr
         function.name,
         hex::encode(function.selector())
     ));
+
+    // TODO: should we add a flag to control the generation of this function
+    let decode_doc = util::expand_doc(&format!(
+        "Decode input based on contract's `{}` (0x{}) function",
+        function.name,
+        hex::encode(function.selector())
+    ));
+    let decoded_input = expand_decoded_input(&function.inputs)?;
+
     Ok(quote! {
 
         #doc
         pub fn #name(&self #input) -> #result {
             self.0.method_hash(#selector, #arg)
                 .expect("method not found (this should never happen)")
+        }
+
+        #decode_doc
+        pub fn decode_#name(&self, input: &[u8]) -> #decoded_input {
+
         }
     })
 }
@@ -69,6 +83,15 @@ pub(crate) fn expand_inputs(inputs: &[Param]) -> Result<TokenStream> {
         })
         .collect::<Result<Vec<_>>>()?;
     Ok(quote! { #( , #params )* })
+}
+
+// converts inputs to the tuple format (param1, param2, ...)
+pub(crate) fn expand_decoded_inputs(inputs: &[Param]) -> Result<TokenStream> {
+    let tuples = inputs.iter().map(|param| {
+        let kind = types::expand(&param.kind)?;
+        Ok(quote! { #kind })
+    }).collect::<Result<Vec<_>>>()?;
+    Ok(quote! { ( #( , #tuples )* ) })
 }
 
 // packs the argument in a tuple to be used for the contract call

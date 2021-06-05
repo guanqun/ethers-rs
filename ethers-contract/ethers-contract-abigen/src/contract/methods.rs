@@ -21,20 +21,36 @@ impl Context {
             .flatten()
             .map(|function| {
                 let signature = function.abi_signature();
-                expand_function(function, aliases.remove(&signature), self.decode_input)
+                expand_function(function, aliases.remove(&signature))
                     .with_context(|| format!("error expanding function '{}'", signature))
             })
             .collect::<Result<Vec<_>>>()?;
 
         Ok(quote! { #( #functions )* })
     }
+
+    pub(crate) fn decode_methods(&self) -> Result<TokenStream> {
+        let mut aliases = self.method_aliases.clone();
+        let sorted_functions: BTreeMap<_, _> = self.abi.functions.clone().into_iter().collect();
+        let functions = sorted_functions
+            .values()
+            .flatten()
+            .map(|function| {
+                let signature = function.abi_signature();
+                expand_decode_function(function, aliases.remove(&signature))
+                    .with_context(|| format!("error expanding function '{}'", signature))
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(quote! { #( #functions )* })
+    }
+
 }
 
 #[allow(unused)]
 fn expand_function(
     function: &Function,
-    alias: Option<Ident>,
-    decode_input: bool,
+    alias: Option<Ident>
 ) -> Result<TokenStream> {
     let name = alias.unwrap_or_else(|| util::safe_ident(&function.name.to_snake_case()));
     let selector = expand_selector(function.selector());
@@ -52,7 +68,7 @@ fn expand_function(
         hex::encode(function.selector())
     ));
 
-    let call_func = quote! {
+    Ok(quote! {
 
         #doc
         pub fn #name(&self #input) -> #result {
@@ -60,7 +76,17 @@ fn expand_function(
                 .expect("method not found (this should never happen)")
         }
 
-    };
+    })
+
+}
+
+#[allow(unused)]
+fn expand_decode_function(
+    function: &Function,
+    alias: Option<Ident>
+) -> Result<TokenStream> {
+    let name = alias.unwrap_or_else(|| util::safe_ident(&function.name.to_snake_case()));
+    let selector = expand_selector(function.selector());
 
     let decode_doc = util::expand_doc(&format!(
         "Decode input based on contract's `{}` (0x{}) function",
@@ -69,25 +95,16 @@ fn expand_function(
     ));
     let decoded_input = expand_fn_outputs(&function.inputs)?;
     let decode_func_name = format_ident!("decode_{}", name);
-    let decode_func = if decode_input {
-        quote! {
-            #decode_doc
-            pub fn #decode_func_name(&self, input: &[u8]) -> Option<#decoded_input> {
-                if input.len() >= 4 && &input[0..4] == &#selector {
-                    self.0.decode_with_selector::<#decoded_input, _>(#selector, &input[4..]).ok()
-                } else {
-                    None
-                }
-            }
-        }
-    } else {
-        quote! {}
-    };
 
     Ok(quote! {
-        #call_func
-
-        #decode_func
+        #decode_doc
+        pub fn #decode_func_name(&self, input: &[u8]) -> Option<#decoded_input> {
+            if input.len() >= 4 && &input[0..4] == &#selector {
+                self.0.decode_with_selector::<#decoded_input, _>(#selector, &input[4..]).ok()
+            } else {
+                None
+            }
+        }
     })
 }
 

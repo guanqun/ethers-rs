@@ -75,6 +75,9 @@ impl Context {
         // 5. Declare the structs parsed from the human readable abi
         let abi_structs_decl = cx.abi_structs()?;
 
+        // 6. impl block for the contract decode methods
+        let contract_decode_methods = cx.decode_methods()?;
+
         Ok(quote! {
             // export all the created data types
             pub use #name_mod::*;
@@ -98,6 +101,10 @@ impl Context {
                     #contract_methods
 
                     #contract_events
+                }
+
+                impl<M> #name<M> {
+                    #contract_decode_methods
                 }
 
                 #events_decl

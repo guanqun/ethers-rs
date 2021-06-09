@@ -198,6 +198,14 @@ impl<P: JsonRpcClient> Middleware for Provider<P> {
         self.request("eth_getTransactionByHash", [hash]).await
     }
 
+    async fn get_raw_transaction<T: Send + Sync + Into<TxHash>>(
+        &self,
+        transaction_hash: T,
+    ) -> Result<Option<Transaction>, ProviderError> {
+        let hash = transaction_hash.into();
+        self.request("eth_getRawTransactionByHash", [hash]).await
+    }
+
     /// Gets the transaction receipt with `transaction_hash`
     async fn get_transaction_receipt<T: Send + Sync + Into<TxHash>>(
         &self,

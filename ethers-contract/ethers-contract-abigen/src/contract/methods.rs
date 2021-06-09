@@ -99,11 +99,7 @@ fn expand_decode_function(
     Ok(quote! {
         #decode_doc
         pub fn #decode_func_name(&self, input: &[u8]) -> Option<#decoded_input> {
-            if input.len() >= 4 && &input[0..4] == &#selector {
-                self.0.decode_with_selector::<#decoded_input, _>(#selector, &input[4..]).ok()
-            } else {
-                None
-            }
+            self.0.decode_with_selector::<#decoded_input, _>(#selector, input).ok()
         }
     })
 }

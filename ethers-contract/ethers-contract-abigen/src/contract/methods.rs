@@ -44,14 +44,10 @@ impl Context {
 
         Ok(quote! { #( #functions )* })
     }
-
 }
 
 #[allow(unused)]
-fn expand_function(
-    function: &Function,
-    alias: Option<Ident>
-) -> Result<TokenStream> {
+fn expand_function(function: &Function, alias: Option<Ident>) -> Result<TokenStream> {
     let name = alias.unwrap_or_else(|| util::safe_ident(&function.name.to_snake_case()));
     let selector = expand_selector(function.selector());
 
@@ -77,14 +73,10 @@ fn expand_function(
         }
 
     })
-
 }
 
 #[allow(unused)]
-fn expand_decode_function(
-    function: &Function,
-    alias: Option<Ident>
-) -> Result<TokenStream> {
+fn expand_decode_function(function: &Function, alias: Option<Ident>) -> Result<TokenStream> {
     let name = alias.unwrap_or_else(|| util::safe_ident(&function.name.to_snake_case()));
     let selector = expand_selector(function.selector());
 

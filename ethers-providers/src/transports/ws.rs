@@ -269,7 +269,6 @@ where
 
     async fn handle_text(&mut self, inner: String) -> Result<(), ClientError> {
         if let Ok(resp) = serde_json::from_str::<Response<serde_json::Value>>(&inner) {
-
             if let Some(request) = self.pending.remove(&resp.id) {
                 request
                     .send(resp.data.into_result())

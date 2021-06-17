@@ -1135,7 +1135,11 @@ macro_rules! impl_shift {
             type Output = Self;
 
             fn shr(self, rhs: $t) -> Self::Output {
-                I256(self.0 >> I256::$convert(rhs).0)
+                if self.is_positive() {
+                    I256(self.0 >> I256::$convert(rhs).0)
+                } else {
+                    I256(!((!self.0) >> I256::$convert(rhs).0))
+                }
             }
         }
 
@@ -1496,7 +1500,12 @@ mod tests {
     #[test]
     fn bit_shift() {
         assert_eq!(I256::one() << 255, I256::MIN);
-        assert_eq!(I256::MIN >> 255, I256::one());
+        assert_eq!(I256::MIN >> 255, -I256::one());
+
+        assert_eq!(
+            I256::from_dec_str("-301922699615978610059531551176780596807482026").unwrap() >> 128,
+            I256::from_dec_str("-887272").unwrap()
+        );
     }
 
     #[test]

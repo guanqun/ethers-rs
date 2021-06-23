@@ -520,6 +520,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
+name = "crypto-bigint"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bdc9968be9247fb330af911b91a58a267cbbcfcb8dea88debaf977738950dce5"
+dependencies = [
+ "generic-array 0.14.4",
+ "subtle 2.4.0",
+]
+
+[[package]]
 name = "crypto-mac"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -668,10 +678,11 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.9.11"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee681bf25de1aad7cd02ccc7525d7b4bfab7be2493dbe3ee18d93f86eb3dcf3e"
+checksum = "dd035cb119cbc25e91bb6f1abbfe341388ddb47a1fe5e77ca6bcbe231e87580b"
 dependencies = [
+ "crypto-bigint",
  "generic-array 0.14.4",
  "rand_core 0.6.2",
  "subtle 2.4.0",
@@ -825,7 +836,7 @@ dependencies = [
  "bincode",
  "bytes",
  "ecdsa",
- "elliptic-curve 0.9.11",
+ "elliptic-curve 0.10.3",
  "ethabi",
  "ethers",
  "funty",
@@ -905,7 +916,7 @@ dependencies = [
  "coins-bip32",
  "coins-bip39",
  "coins-ledger",
- "elliptic-curve 0.9.11",
+ "elliptic-curve 0.10.3",
  "eth-keystore",
  "ethers",
  "ethers-core",

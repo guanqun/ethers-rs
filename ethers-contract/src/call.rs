@@ -6,7 +6,7 @@ use super::base::{decode_function_data, AbiError};
 use ethers_core::{
     abi::{Detokenize, Function, InvalidOutputType},
     types::{
-        transaction::eip2718::TypedTransaction, Address, BlockId, Bytes, TransactionRequest, U256,
+        transaction::eip2718::TypedTransaction, Address, BlockId, Bytes, NameOrAddress, TransactionRequest, U256,
     },
 };
 use ethers_providers::{
@@ -212,6 +212,13 @@ where
             }
             other => other,
         };
+        self
+    }
+
+    /// Sets the `to` field in the transaction to the provided value
+    /// This is useful when we could use a dummy contract as the template.
+    pub fn to<T: Into<NameOrAddress>>(mut self, to: T) -> Self {
+        self.tx.set_to(to);
         self
     }
 

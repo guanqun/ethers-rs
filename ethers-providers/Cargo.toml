@@ -42,6 +42,7 @@ once_cell.workspace = true
 bytes.workspace = true
 instant.workspace = true
 hashers = "1.0"
+itertools = "0.10.5"
 
 # required for implementing stream on the filters
 futures-core.workspace = true

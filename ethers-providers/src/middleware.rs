@@ -591,6 +591,19 @@ pub trait Middleware: Sync + Send + Debug {
         self.inner().get_storage_at(from, location, block).await.map_err(MiddlewareError::from_err)
     }
 
+    /// Get multiple storages of a vector of addresses for a vector of slot locations
+    async fn get_multiple_storages(
+        &self,
+        froms: Vec<Address>,
+        locations: Vec<H256>,
+        block: Option<BlockId>,
+    ) -> Result<Vec<Vec<H256>>, Self::Error> {
+        self.inner()
+            .get_multiple_storages(froms, locations, block)
+            .await
+            .map_err(MiddlewareError::from_err)
+    }
+
     /// Returns the EIP-1186 proof response
     /// <https://github.com/ethereum/EIPs/issues/1186>
     async fn get_proof<T: Into<NameOrAddress> + Send + Sync>(

@@ -34,6 +34,7 @@ use ethers_core::{
     utils,
 };
 use futures_util::{lock::Mutex, try_join};
+use itertools::Itertools;
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
     collections::VecDeque, convert::TryFrom, fmt::Debug, str::FromStr, sync::Arc, time::Duration,
@@ -122,6 +123,18 @@ pub enum FilterKind<'a> {
 
     /// `eth_newPendingTransactionFilter` filter
     PendingTransactions,
+}
+
+/// decode and left-pad to 32 bytes
+fn parse_slot(value: String) -> Result<H256, ProviderError> {
+    let bytes = hex::decode(value)?;
+    if bytes.len() > 32 {
+        Err(hex::FromHexError::InvalidStringLength.into())
+    } else {
+        let mut buf = [0; 32];
+        buf[32 - bytes.len()..].copy_from_slice(&bytes);
+        Ok(H256(buf))
+    }
 }
 
 // JSON RPC bindings
@@ -682,15 +695,29 @@ impl<P: JsonRpcClient> Middleware for Provider<P> {
 
         // get the hex encoded value
         let value: String = self.request("eth_getStorageAt", [from, position, block]).await?;
-        // decode and left-pad to 32 bytes
-        let bytes = hex::decode(value)?;
-        if bytes.len() > 32 {
-            Err(hex::FromHexError::InvalidStringLength.into())
-        } else {
-            let mut buf = [0; 32];
-            buf[32 - bytes.len()..].copy_from_slice(&bytes);
-            Ok(H256(buf))
-        }
+        parse_slot(value)
+    }
+
+    async fn get_multiple_storages(
+        &self,
+        froms: Vec<Address>,
+        locations: Vec<H256>,
+        block: Option<BlockId>,
+    ) -> Result<Vec<Vec<H256>>, ProviderError> {
+        let froms = utils::serialize(&froms);
+        let locations = utils::serialize(&locations);
+        let block = utils::serialize(&block.unwrap_or_else(|| BlockNumber::Latest.into()));
+
+        // get the hex encoded value.
+        let values: Vec<Vec<String>> =
+            self.request("eth_getMultipleStorages", [froms, locations, block]).await?;
+
+        let ret: Vec<Vec<H256>> = values
+            .into_iter()
+            .map(|inner_vec| inner_vec.into_iter().map(|v| parse_slot(v)).try_collect())
+            .try_collect()?;
+
+        Ok(ret)
     }
 
     async fn get_code<T: Into<NameOrAddress> + Send + Sync>(

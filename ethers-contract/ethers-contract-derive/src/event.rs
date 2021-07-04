@@ -73,6 +73,12 @@ pub(crate) fn derive_eth_event_impl(input: DeriveInput) -> Result<TokenStream> {
     let ethers_contract = ethers_contract_crate();
 
     let ethevent_impl = quote! {
+        impl #name {
+            pub const fn const_signature() -> #ethers_core::types::H256 {
+                #signature
+            }
+        }
+
         impl #ethers_contract::EthEvent for #name {
 
             fn name() -> ::std::borrow::Cow<'static, str> {

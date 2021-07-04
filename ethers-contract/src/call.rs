@@ -1,7 +1,7 @@
 use super::base::{decode_function_data, AbiError};
 use ethers_core::{
     abi::{Detokenize, Function, InvalidOutputType},
-    types::{Address, BlockId, Bytes, TransactionRequest, U256},
+    types::{Address, BlockId, Bytes, NameOrAddress, TransactionRequest, U256},
 };
 use ethers_providers::{Middleware, PendingTransaction, ProviderError};
 
@@ -61,6 +61,13 @@ impl<M, D: Detokenize> ContractCall<M, D> {
     /// Sets the `from` field in the transaction to the provided value
     pub fn from<T: Into<Address>>(mut self, from: T) -> Self {
         self.tx.from = Some(from.into());
+        self
+    }
+
+    /// Sets the `to` field in the transaction to the provided value
+    /// This is useful when we could use a dummy contract as the template.
+    pub fn to<T: Into<Address>>(mut self, from: T) -> Self {
+        self.tx.to = Some(NameOrAddress::from(from.into()));
         self
     }
 

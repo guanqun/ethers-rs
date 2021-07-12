@@ -1,4 +1,4 @@
-use super::transaction::NUM_TX_FIELDS;
+use super::transaction::SIGNED_TX_FIELDS;
 use crate::{
     types::{Address, Bytes, Signature, TransactionRequest, H256, U64},
     utils::keccak256,
@@ -8,7 +8,7 @@ use rlp::RlpStream;
 use rlp_derive::RlpEncodable;
 use serde::{Deserialize, Serialize};
 
-const NUM_EIP2930_FIELDS: usize = NUM_TX_FIELDS + 1;
+const NUM_EIP2930_FIELDS: usize = SIGNED_TX_FIELDS + 1;
 
 /// Access list
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, RlpEncodable)]
@@ -43,7 +43,7 @@ pub enum TransactionEnvelope {
 
 impl TransactionEnvelope {
     /// Hashes the transaction's data with the provided chain id
-    pub fn sighash<T: Into<U64>>(&self, chain_id: T) -> H256 {
+    pub fn sighash<T: Into<U64>>(&self, chain_id: Option<T>) -> H256 {
         let encoded = match self {
             TransactionEnvelope::Legacy(ref tx) => {
                 let mut encoded = vec![0];
@@ -52,7 +52,7 @@ impl TransactionEnvelope {
             }
             TransactionEnvelope::Eip2930(ref tx) => {
                 let mut encoded = vec![1];
-                encoded.extend_from_slice(tx.rlp(chain_id).as_ref());
+                encoded.extend_from_slice(tx.rlp(chain_id.expect("expect chain_id set")).as_ref());
                 encoded
             }
         };

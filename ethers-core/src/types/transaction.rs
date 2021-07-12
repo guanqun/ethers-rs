@@ -18,7 +18,7 @@ const UNSIGNED_TX_FIELDS: usize = 6;
 const UNSIGNED_TX_FIELDS: usize = 9;
 
 // Unsigned fields + signature [r s v]
-const SIGNED_TX_FIELDS: usize = UNSIGNED_TX_FIELDS + 3;
+pub const SIGNED_TX_FIELDS: usize = UNSIGNED_TX_FIELDS + 3;
 
 /// Parameters for sending a transaction
 #[derive(Clone, Default, Serialize, Deserialize, PartialEq, Eq, Debug)]

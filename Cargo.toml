@@ -6,5 +6,5 @@ members = [
     "./ethers-providers",
     "./ethers-signers",
     "./ethers-core",
-    "./ethers-middleware",
+#    "./ethers-middleware",
 ]

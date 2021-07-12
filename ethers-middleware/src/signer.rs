@@ -94,6 +94,9 @@ pub enum SignerMiddlewareError<M: Middleware, S: Signer> {
     /// Thrown if the `gas` field is missing
     #[error("no gas was specified")]
     GasMissing,
+    /// Thrown for EIP2930 transaction
+    #[error("EIP2930 transaction not supported")]
+    Eip2930NotSupported,
 }
 
 // Helper functions for locally signing transactions
@@ -116,55 +119,63 @@ where
         &self,
         tx: TransactionEnvelope,
     ) -> Result<Transaction, SignerMiddlewareError<M, S>> {
-        // The nonce, gas and gasprice fields must already be populated
-        let nonce = tx.nonce.ok_or(SignerMiddlewareError::NonceMissing)?;
-        let gas_price = tx.gas_price.ok_or(SignerMiddlewareError::GasPriceMissing)?;
-        let gas = tx.gas.ok_or(SignerMiddlewareError::GasMissing)?;
+        match tx {
+            TransactionEnvelope::Legacy(tx) => {
+                // The nonce, gas and gasprice fields must already be populated
+                let nonce = tx.nonce.ok_or(SignerMiddlewareError::NonceMissing)?;
+                let gas_price = tx.gas_price.ok_or(SignerMiddlewareError::GasPriceMissing)?;
+                let gas = tx.gas.ok_or(SignerMiddlewareError::GasMissing)?;
 
-        let signature = self
-            .signer
-            .sign_transaction(&tx)
-            .await
-            .map_err(SignerMiddlewareError::SignerError)?;
+                let signature = self
+                    .signer
+                    .sign_transaction(TransactionEnvelope::Legacy(tx.clone()))
+                    .await
+                    .map_err(SignerMiddlewareError::SignerError)?;
 
-        // Get the actual transaction hash
-        let rlp = tx.rlp_signed(&signature);
-        let hash = keccak256(&rlp.as_ref());
+                // Get the actual transaction hash
+                let rlp = tx.rlp_signed(&signature);
+                let hash = keccak256(&rlp.as_ref());
 
-        // This function should not be called with ENS names
-        let to = tx.to.map(|to| match to {
-            NameOrAddress::Address(inner) => inner,
-            NameOrAddress::Name(_) => {
-                panic!("Expected `to` to be an Ethereum Address, not an ENS name")
+                // This function should not be called with ENS names
+                let to = tx.to.map(|to| match to {
+                    NameOrAddress::Address(inner) => inner,
+                    NameOrAddress::Name(_) => {
+                        panic!("Expected `to` to be an Ethereum Address, not an ENS name")
+                    }
+                });
+
+                Ok(Transaction {
+                    hash: hash.into(),
+                    nonce,
+                    from: self.address(),
+                    to,
+                    value: tx.value.unwrap_or_default(),
+                    gas_price,
+                    gas,
+                    input: tx.data.unwrap_or_default(),
+                    v: signature.v.into(),
+                    r: U256::from_big_endian(signature.r.as_bytes()),
+                    s: U256::from_big_endian(signature.s.as_bytes()),
+
+                    // Leave these empty as they're only used for included transactions
+                    block_hash: None,
+                    block_number: None,
+                    transaction_index: None,
+
+                    // Celo support
+                    #[cfg(feature = "celo")]
+                    fee_currency: tx.fee_currency,
+                    #[cfg(feature = "celo")]
+                    gateway_fee: tx.gateway_fee,
+                    #[cfg(feature = "celo")]
+                    gateway_fee_recipient: tx.gateway_fee_recipient,
+                })
             }
-        });
-
-        Ok(Transaction {
-            hash: hash.into(),
-            nonce,
-            from: self.address(),
-            to,
-            value: tx.value.unwrap_or_default(),
-            gas_price,
-            gas,
-            input: tx.data.unwrap_or_default(),
-            v: signature.v.into(),
-            r: U256::from_big_endian(signature.r.as_bytes()),
-            s: U256::from_big_endian(signature.s.as_bytes()),
-
-            // Leave these empty as they're only used for included transactions
-            block_hash: None,
-            block_number: None,
-            transaction_index: None,
-
-            // Celo support
-            #[cfg(feature = "celo")]
-            fee_currency: tx.fee_currency,
-            #[cfg(feature = "celo")]
-            gateway_fee: tx.gateway_fee,
-            #[cfg(feature = "celo")]
-            gateway_fee_recipient: tx.gateway_fee_recipient,
-        })
+            TransactionEnvelope::Eip2930(_) => {
+                // TODO: implement this
+                Err(SignerMiddlewareError::Eip2930NotSupported)
+            }
+        }
     }
 
     async fn fill_transaction(

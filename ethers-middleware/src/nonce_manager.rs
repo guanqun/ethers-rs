@@ -84,9 +84,9 @@ where
     /// Signs and broadcasts the transaction. The optional parameter `block` can be passed so that
     /// gas cost and nonce calculations take it into account. For simple transactions this can be
     /// left to `None`.
-    async fn send_transaction(
+    async fn send_transaction<T: Send + Sync + Into<TransactionEnvelope>>(
         &self,
-        mut tx: TransactionRequest,
+        mut tx: T,
         block: Option<BlockId>,
     ) -> Result<PendingTransaction<'_, Self::Provider>, Self::Error> {
         if tx.nonce.is_none() {

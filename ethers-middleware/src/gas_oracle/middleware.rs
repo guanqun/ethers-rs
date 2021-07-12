@@ -56,9 +56,9 @@ where
         Ok(self.gas_oracle.fetch().await?)
     }
 
-    async fn send_transaction(
+    async fn send_transaction<T: Send + Sync + Into<TransactionEnvelope>>(
         &self,
-        mut tx: TransactionRequest,
+        mut tx: T,
         block: Option<BlockId>,
     ) -> Result<PendingTransaction<'_, Self::Provider>, Self::Error> {
         if tx.gas_price.is_none() {

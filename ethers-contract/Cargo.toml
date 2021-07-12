@@ -30,7 +30,7 @@ ethers-providers = { version = "0.4.0", path = "../ethers-providers", default-fe
 tokio = { version = "1.5", default-features = false, features = ["macros"] }
 
 ethers-signers = { version = "0.4.0", path = "../ethers-signers" }
-ethers-middleware = { version = "0.4.0", path = "../ethers-middleware" }
+#ethers-middleware = { version = "0.4.0", path = "../ethers-middleware" }
 
 [features]
 abigen = ["ethers-contract-abigen", "ethers-contract-derive"]

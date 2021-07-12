@@ -25,7 +25,7 @@ celo = [
     "ethers-providers/celo",
     "ethers-signers/celo",
     "ethers-contract/celo",
-    "ethers-middleware/celo",
+#    "ethers-middleware/celo",
 ]
 
 ledger = ["ethers-signers/ledger"]
@@ -38,7 +38,7 @@ ethers-contract = { version = "0.4.0", path = "../ethers-contract" }
 ethers-core = { version = "0.4.0", path = "../ethers-core", features = ["setup"] }
 ethers-providers = { version = "0.4.0", path = "../ethers-providers" }
 ethers-signers = { version = "0.4.0", path = "../ethers-signers" }
-ethers-middleware = { version = "0.4.0", path = "../ethers-middleware" }
+#ethers-middleware = { version = "0.4.0", path = "../ethers-middleware" }
 
 [dev-dependencies]
 ethers-contract = { version = "0.4.0", path = "../ethers-contract", features = ["abigen"] }

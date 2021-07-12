@@ -90,7 +90,7 @@
 //! [`types`]: core::types
 pub use ethers_contract as contract;
 pub use ethers_core as core;
-pub use ethers_middleware as middleware;
+// pub use ethers_middleware as middleware;
 pub use ethers_providers as providers;
 pub use ethers_signers as signers;
 
@@ -109,7 +109,7 @@ pub use ethers_core::utils;
 pub mod prelude {
     pub use ethers_contract::*;
     pub use ethers_core::types::*;
-    pub use ethers_middleware::*;
+    // pub use ethers_middleware::*;
     pub use ethers_providers::*;
     pub use ethers_signers::*;
 }

@@ -186,7 +186,7 @@ pub trait Middleware: Sync + Send + Debug {
         self.inner().get_block_number().await.map_err(FromErr::from)
     }
 
-    async fn send_transaction<T: Send + Sync + Into<TransactionEnvelope>>(
+    async fn send_transaction<T: Clone + Send + Sync + Into<TransactionEnvelope>>(
         &self,
         tx: T,
         block: Option<BlockId>,

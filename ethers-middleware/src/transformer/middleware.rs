@@ -53,9 +53,9 @@ where
         &self.inner
     }
 
-    async fn send_transaction(
+    async fn send_transaction<TX: Send + Sync + Into<TransactionEnvelope>>(
         &self,
-        mut tx: TransactionRequest,
+        mut tx: TX,
         block: Option<BlockId>,
     ) -> Result<PendingTransaction<'_, Self::Provider>, Self::Error> {
         // resolve the to field if that's an ENS name.

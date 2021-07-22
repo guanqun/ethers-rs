@@ -217,6 +217,12 @@ impl<P: JsonRpcClient> Provider<P> {
             }
         })
     }
+
+    pub async fn send_raw_transaction_with_rlp(&self, rlp: Bytes) -> Result<TxHash, ProviderError> {
+        let rlp = utils::serialize(&rlp);
+        let tx_hash = self.request("eth_sendRawTransaction", [rlp]).await?;
+        Ok(tx_hash)
+    }
 }
 
 #[cfg(feature = "celo")]

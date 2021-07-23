@@ -242,13 +242,13 @@ pub trait Middleware: Sync + Send + Debug {
             .map_err(FromErr::from)
     }
 
-    async fn estimate_gas(&self, tx: &TransactionRequest) -> Result<U256, Self::Error> {
+    async fn estimate_gas<T: Send + Sync + Into<TransactionEnvelope>>(&self, tx: T) -> Result<U256, Self::Error> {
         self.inner().estimate_gas(tx).await.map_err(FromErr::from)
     }
 
-    async fn call(
+    async fn call<T: Send + Sync + Into<TransactionEnvelope>>(
         &self,
-        tx: &TransactionRequest,
+        tx: T,
         block: Option<BlockId>,
     ) -> Result<Bytes, Self::Error> {
         self.inner().call(tx, block).await.map_err(FromErr::from)

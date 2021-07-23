@@ -7,11 +7,12 @@ use crate::{
 
 use ethers_core::{
     abi::{Abi, Detokenize, Error, EventExt, Function, Tokenize},
-    types::{Address, Filter, NameOrAddress, Selector, TransactionRequest},
+    types::{Address, Filter, NameOrAddress, Selector},
 };
 use ethers_providers::Middleware;
 
 use std::{fmt::Debug, marker::PhantomData, sync::Arc};
+use ethers_core::types::DynamicFeeTransactionRequest;
 
 /// A Contract is an abstraction of an executable program on the Ethereum Blockchain.
 /// It has code (called byte code) as well as allocated long-term memory
@@ -221,7 +222,7 @@ impl<M: Middleware> Contract<M> {
         let data = encode_function_data(function, args)?;
 
         // create the tx object
-        let tx = TransactionRequest {
+        let tx = DynamicFeeTransactionRequest {
             to: Some(NameOrAddress::Address(self.address)),
             data: Some(data),
             ..Default::default()

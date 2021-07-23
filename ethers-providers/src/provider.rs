@@ -28,6 +28,7 @@ use url::{ParseError, Url};
 use std::{convert::TryFrom, fmt::Debug, time::Duration};
 use tracing::trace;
 use tracing_futures::Instrument;
+use ethers_core::types::DynamicFeeTransactionRequest;
 
 /// An abstract provider for interacting with the [Ethereum JSON RPC
 /// API](https://github.com/ethereum/wiki/wiki/JSON-RPC). Must be instantiated
@@ -277,12 +278,12 @@ impl<P: JsonRpcClient> Middleware for Provider<P> {
 
     /// Sends the read-only (constant) transaction to a single Ethereum node and return the result (as bytes) of executing it.
     /// This is free, since it does not change any state on the blockchain.
-    async fn call(
+    async fn call<T: Send + Sync + Into<TransactionEnvelope>>(
         &self,
-        tx: &TransactionRequest,
+        tx: T,
         block: Option<BlockId>,
     ) -> Result<Bytes, ProviderError> {
-        let tx = utils::serialize(tx);
+        let tx = utils::serialize(&tx.into());
         let block = utils::serialize(&block.unwrap_or_else(|| BlockNumber::Latest.into()));
         self.request("eth_call", [tx, block]).await
     }
@@ -290,7 +291,8 @@ impl<P: JsonRpcClient> Middleware for Provider<P> {
     /// Sends a transaction to a single Ethereum node and return the estimated amount of gas required (as a U256) to send it
     /// This is free, but only an estimate. Providing too little gas will result in a transaction being rejected
     /// (while still consuming all provided gas).
-    async fn estimate_gas(&self, tx: &TransactionRequest) -> Result<U256, ProviderError> {
+    async fn estimate_gas<T: Send + Sync + Into<TransactionEnvelope>>(&self, tx: T) -> Result<U256, ProviderError> {
+        let tx = tx.into();
         self.request("eth_estimateGas", [tx]).await
     }
 
@@ -308,8 +310,11 @@ impl<P: JsonRpcClient> Middleware for Provider<P> {
             TransactionEnvelope::Legacy(ref mut inner) => {
                 self.populate_transaction(inner).await?;
             }
-            TransactionEnvelope::Eip2930(ref mut eip2930_tx) => {
-                self.populate_transaction(&mut eip2930_tx.tx).await?;
+            TransactionEnvelope::AccessList(ref mut access_list_tx) => {
+                self.populate_transaction(&mut access_list_tx.tx).await?;
+            }
+            TransactionEnvelope::DynamicFee(ref mut dynamic_fee_tx) => {
+                self.populate_dynamic_fee_transaction(dynamic_fee_tx).await?
             }
         };
 
@@ -319,10 +324,10 @@ impl<P: JsonRpcClient> Middleware for Provider<P> {
 
     /// Send the raw RLP encoded transaction to the entire Ethereum network and returns the transaction's hash
     /// This will consume gas from the account that signed the transaction.
-    async fn send_raw_transaction<'a>(
-        &'a self,
+    async fn send_raw_transaction(
+        &self,
         tx: &Transaction,
-    ) -> Result<PendingTransaction<'a, P>, ProviderError> {
+    ) -> Result<PendingTransaction<P>, ProviderError> {
         let rlp = utils::serialize(&tx.rlp());
         let tx_hash = self.request("eth_sendRawTransaction", [rlp]).await?;
         Ok(PendingTransaction::new(tx_hash, self).interval(self.get_interval()))
@@ -670,8 +675,29 @@ impl<P: JsonRpcClient> Provider<P> {
         }
 
         if tx.gas.is_none() {
-            tx.gas = Some(self.estimate_gas(&tx).await?);
+            // tx.gas = Some(self.estimate_gas(&tx).await?);
         }
+
+        if let Some(NameOrAddress::Name(ref ens_name)) = tx.to {
+            // resolve to an address
+            let addr = self.resolve_name(&ens_name).await?;
+
+            // set the value
+            tx.to = Some(addr.into())
+        }
+
+        Ok(())
+    }
+
+    async fn populate_dynamic_fee_transaction(&self, tx: &mut DynamicFeeTransactionRequest) -> Result<(), ProviderError> {
+        if tx.from.is_none() {
+            tx.from = self.3;
+        }
+
+        // TODO:
+        // if tx.gas.is_none() {
+        //     tx.gas = Some(self.estimate_gas(&tx).await?);
+        // }
 
         if let Some(NameOrAddress::Name(ref ens_name)) = tx.to {
             // resolve to an address
@@ -696,7 +722,7 @@ impl<P: JsonRpcClient> Provider<P> {
         // first get the resolver responsible for this name
         // the call will return a Bytes array which we convert to an address
         let data = self
-            .call(&ens::get_resolver(ens_addr, ens_name), None)
+            .call(ens::get_resolver(ens_addr, ens_name), None)
             .await?;
 
         let resolver_address: Address = decode_bytes(ParamType::Address, data);
@@ -706,7 +732,7 @@ impl<P: JsonRpcClient> Provider<P> {
 
         // resolve
         let data = self
-            .call(&ens::resolve(resolver_address, selector, ens_name), None)
+            .call(ens::resolve(resolver_address, selector, ens_name), None)
             .await?;
 
         Ok(decode_bytes(param, data))

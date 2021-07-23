@@ -11,7 +11,7 @@ mod transaction;
 pub use transaction::{Transaction, TransactionReceipt, TransactionRequest};
 
 mod typed_transaction;
-pub use typed_transaction::{AccessList, Eip2930TransactionRequest, TransactionEnvelope};
+pub use typed_transaction::{AccessList, AccessListTransactionRequest, TransactionEnvelope, DynamicFeeTransactionRequest};
 
 mod address_or_bytes;
 pub use address_or_bytes::AddressOrBytes;

@@ -1,13 +1,14 @@
 use super::base::{decode_function_data, AbiError};
 use ethers_core::{
     abi::{Detokenize, Function, InvalidOutputType},
-    types::{Address, BlockId, Bytes, TransactionRequest, U256},
+    types::{Address, BlockId, Bytes, U256},
 };
 use ethers_providers::{Middleware, PendingTransaction, ProviderError};
 
 use std::{fmt::Debug, marker::PhantomData, sync::Arc};
 
 use thiserror::Error as ThisError;
+use ethers_core::types::DynamicFeeTransactionRequest;
 
 #[derive(ThisError, Debug)]
 /// An Error which is thrown when interacting with a smart contract
@@ -48,7 +49,7 @@ pub enum ContractError<M: Middleware> {
 /// Helper for managing a transaction before submitting it to a node
 pub struct ContractCall<M, D> {
     /// The raw transaction object
-    pub tx: TransactionRequest,
+    pub tx: DynamicFeeTransactionRequest,
     /// The ABI of the function being called
     pub function: Function,
     /// Optional block number to be used when calculating the transaction's gas and nonce
@@ -70,9 +71,15 @@ impl<M, D: Detokenize> ContractCall<M, D> {
         self
     }
 
-    /// Sets the `gas_price` field in the transaction to the provided value
-    pub fn gas_price<T: Into<U256>>(mut self, gas_price: T) -> Self {
-        self.tx.gas_price = Some(gas_price.into());
+    /// Sets the `max_priority_fee_per_gas` field in the transaction to the provided value
+    pub fn max_priority_fee_per_gas<T: Into<U256>>(mut self, max_priority_fee_per_gas: T) -> Self {
+        self.tx.max_priority_fee_per_gas = max_priority_fee_per_gas.into();
+        self
+    }
+
+    /// Sets the `max_fee_per_gas` field in the transaction to the provided value
+    pub fn max_fee_per_gas<T: Into<U256>>(mut self, max_fee_per_gas: T) -> Self {
+        self.tx.max_fee_per_gas = max_fee_per_gas.into();
         self
     }
 
@@ -102,7 +109,7 @@ where
     /// Returns the estimated gas cost for the underlying transaction to be executed
     pub async fn estimate_gas(&self) -> Result<U256, ContractError<M>> {
         self.client
-            .estimate_gas(&self.tx)
+            .estimate_gas(self.tx.clone())
             .await
             .map_err(ContractError::MiddlewareError)
     }
@@ -119,7 +126,7 @@ where
     pub async fn call(&self) -> Result<D, ContractError<M>> {
         let bytes = self
             .client
-            .call(&self.tx, self.block)
+            .call(self.tx.clone(), self.block)
             .await
             .map_err(ContractError::MiddlewareError)?;
 

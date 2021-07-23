@@ -1,7 +1,7 @@
 //! Transaction types
 use crate::{
     types::{
-        AccessList, Address, Bloom, Bytes, Eip2930TransactionRequest, Log, NameOrAddress,
+        AccessList, Address, Bloom, Bytes, AccessListTransactionRequest, Log, NameOrAddress,
         Signature, H256, U256, U64,
     },
     utils::keccak256,
@@ -92,8 +92,8 @@ impl TransactionRequest {
     pub fn with_access_list<T: Into<AccessList>>(
         self,
         access_list: T,
-    ) -> Eip2930TransactionRequest {
-        Eip2930TransactionRequest::new(self, access_list.into())
+    ) -> AccessListTransactionRequest {
+        AccessListTransactionRequest::new(self, access_list.into())
     }
 
     // Builder pattern helpers
@@ -275,12 +275,21 @@ pub struct Transaction {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub to: Option<Address>,
 
-    /// Transfered value
+    /// Transferred value
     pub value: U256,
 
     /// Gas Price
     #[serde(rename = "gasPrice")]
-    pub gas_price: U256,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gas_price: Option<U256>,
+
+    #[serde(rename = "maxPriorityFeePerGas")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_priority_fee_per_gas: Option<U256>,
+
+    #[serde(rename = "maxFeePerGas")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_fee_per_gas: Option<U256>,
 
     /// Gas amount
     pub gas: U256,
@@ -462,3 +471,5 @@ mod tests {
         .unwrap();
     }
 }
+
+

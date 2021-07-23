@@ -244,8 +244,9 @@ fn rlp_opt<T: rlp::Encodable>(rlp: &mut RlpStream, opt: Option<T>) {
     }
 }
 
-/// Details of a signed transaction
+/// Details of a signed transaction, this is used in eth_getTransactionByHash's return value.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Transaction {
     /// The transaction's hash
     pub hash: H256,
@@ -254,17 +255,14 @@ pub struct Transaction {
     pub nonce: U256,
 
     /// Block hash. None when pending.
-    #[serde(rename = "blockHash")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub block_hash: Option<H256>,
 
     /// Block number. None when pending.
-    #[serde(rename = "blockNumber")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub block_number: Option<U64>,
 
     /// Transaction Index. None when pending.
-    #[serde(rename = "transactionIndex")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub transaction_index: Option<U64>,
 
@@ -279,15 +277,12 @@ pub struct Transaction {
     pub value: U256,
 
     /// Gas Price
-    #[serde(rename = "gasPrice")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gas_price: Option<U256>,
 
-    #[serde(rename = "maxPriorityFeePerGas")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_priority_fee_per_gas: Option<U256>,
 
-    #[serde(rename = "maxFeePerGas")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_fee_per_gas: Option<U256>,
 

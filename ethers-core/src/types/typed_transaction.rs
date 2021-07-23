@@ -65,6 +65,7 @@ impl TransactionEnvelope {
                 encoded
             }
         };
+        println!("xx: {:x?}", &encoded);
         keccak256(encoded).into()
     }
 }
@@ -146,7 +147,7 @@ pub struct DynamicFeeTransactionRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gas: Option<U256>,
 
-    /// Transffered value (None for no transfer)
+    /// Transferred value (None for no transfer)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<U256>,
 
@@ -159,10 +160,13 @@ pub struct DynamicFeeTransactionRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub nonce: Option<U256>,
 
+    #[serde(rename = "accessList")]
     pub access_list: AccessList,
 
+    #[serde(rename = "maxPriorityFeePerGas")]
     pub max_priority_fee_per_gas: U256,
 
+    #[serde(rename = "maxFeePerGas")]
     pub max_fee_per_gas: U256,
 }
 
@@ -293,6 +297,8 @@ fn rlp_opt<T: rlp::Encodable>(rlp: &mut RlpStream, opt: Option<T>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
+    use crate::types::Transaction;
 
     #[test]
     fn serde_legacy_tx() {
@@ -331,4 +337,108 @@ mod tests {
         let de: AccessListTransactionRequest = serde_json::from_str(&serialized).unwrap();
         assert_eq!(tx, TransactionEnvelope::AccessList(de));
     }
+
+    #[test]
+    fn test_typed_tx_without_access_list() {
+        let tx: DynamicFeeTransactionRequest = serde_json::from_str(
+            r#"{
+            "gas": "0x186a0",
+            "maxFeePerGas": "0x77359400",
+            "maxPriorityFeePerGas": "0x77359400",
+            "data": "0x5544",
+            "nonce": "0x2",
+            "to": "0x96216849c49358B10257cb55b28eA603c874b05E",
+            "value": "0x5af3107a4000",
+            "type": "0x2",
+            "chainId": "0x539",
+            "accessList": [],
+            "v": "0x1",
+            "r": "0xc3000cd391f991169ebfd5d3b9e93c89d31a61c998a21b07a11dc6b9d66f8a8e",
+            "s": "0x22cfe8424b2fbd78b16c9911da1be2349027b0a3c40adf4b6459222323773f74"
+        }"#).unwrap();
+
+        println!("{:?}", &tx);
+
+        let envelope = TransactionEnvelope::DynamicFee(tx);
+
+        // the chainId info is not parsed properly, maybe we should add chainId to the transaction request?
+
+        let expected = H256::from_str("0xa1ea3121940930f7e7b54506d80717f14c5163807951624c36354202a8bffda6").unwrap();
+        let actual = envelope.sighash(Some(0x539));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_typed_tx() {
+        let tx: DynamicFeeTransactionRequest = serde_json::from_str(
+            r#"{
+            "gas": "0x186a0",
+            "maxFeePerGas": "0x77359400",
+            "maxPriorityFeePerGas": "0x77359400",
+            "data": "0x5544",
+            "nonce": "0x2",
+            "to": "0x96216849c49358B10257cb55b28eA603c874b05E",
+            "value": "0x5af3107a4000",
+            "type": "0x2",
+            "accessList": [
+                {
+                    "address": "0x0000000000000000000000000000000000000001",
+                    "storageKeys": [
+                        "0x0100000000000000000000000000000000000000000000000000000000000000"
+                    ]
+                }
+            ],
+            "chainId": "0x539",
+            "v": "0x1",
+            "r": "0xc3000cd391f991169ebfd5d3b9e93c89d31a61c998a21b07a11dc6b9d66f8a8e",
+            "s": "0x22cfe8424b2fbd78b16c9911da1be2349027b0a3c40adf4b6459222323773f74"
+        }"#).unwrap();
+
+        println!("{:?}", &tx);
+
+        let envelope = TransactionEnvelope::DynamicFee(tx);
+
+        // the chainId info is not parsed properly, maybe we should add chainId to the transaction request?
+
+        let expected = H256::from_str("0x090b19818d9d087a49c3d2ecee4829ee4acea46089c1381ac5e588188627466d").unwrap();
+        let actual = envelope.sighash(Some(0x539));
+        assert_eq!(expected, actual);
+    }
+
+    // #[test]
+    // fn test_typed_tx2() {
+    //     let tx: Transaction = serde_json::from_str(
+    //         r#"{
+    //         "gas": "0x186a0",
+    //         "maxFeePerGas": "0x77359400",
+    //         "maxPriorityFeePerGas": "0x77359400",
+    //         "data": "0x5544",
+    //         "nonce": "0x2",
+    //         "to": "0x96216849c49358B10257cb55b28eA603c874b05E",
+    //         "value": "0x5af3107a4000",
+    //         "type": "0x2",
+    //         "accessList": [
+    //             {
+    //                 "address": "0x0000000000000000000000000000000000000001",
+    //                 "storageKeys": [
+    //                     "0x0100000000000000000000000000000000000000000000000000000000000000"
+    //                 ]
+    //             }
+    //         ],
+    //         "chainId": "0x539",
+    //         "v": "0x1",
+    //         "r": "0xc3000cd391f991169ebfd5d3b9e93c89d31a61c998a21b07a11dc6b9d66f8a8e",
+    //         "s": "0x22cfe8424b2fbd78b16c9911da1be2349027b0a3c40adf4b6459222323773f74"
+    //     }"#).unwrap();
+    //
+    //     println!("{:?}", &tx);
+    //
+    //     let envelope = TransactionEnvelope::DynamicFee(tx);
+    //
+    //     // the chainId info is not parsed properly, maybe we should add chainId to the transaction request?
+    //
+    //     let expected = H256::from_str("0x090b19818d9d087a49c3d2ecee4829ee4acea46089c1381ac5e588188627466d").unwrap();
+    //     let actual = envelope.sighash(Some(0x539));
+    //     assert_eq!(expected, actual);
+    // }
 }

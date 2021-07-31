@@ -1,5 +1,5 @@
 use super::{request::TransactionRequest, NUM_TX_FIELDS};
-use crate::types::{Address, Bytes, Signature, H256, U64};
+use crate::types::{Address, Bytes, Signature, H256, U256, U64};
 
 use rlp::RlpStream;
 use rlp_derive::RlpEncodable;
@@ -10,6 +10,13 @@ const NUM_EIP2930_FIELDS: usize = NUM_TX_FIELDS + 1;
 /// Access list
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, RlpEncodable)]
 pub struct AccessList(pub Vec<AccessListItem>);
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AccessListWithGasUsed {
+    pub access_list: AccessList,
+    pub gas_used: U256,
+}
 
 impl From<Vec<AccessListItem>> for AccessList {
     fn from(src: Vec<AccessListItem>) -> AccessList {

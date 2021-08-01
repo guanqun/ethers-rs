@@ -105,7 +105,7 @@ mod tests {
             .to(Address::zero())
             .value(U256::from(100))
             .with_access_list(access_list);
-        let tx = TypedTransaction::from(tx);
+        let tx: TypedTransaction = tx.into();
         let serialized = serde_json::to_string(&tx).unwrap();
         dbg!(&serialized);
 

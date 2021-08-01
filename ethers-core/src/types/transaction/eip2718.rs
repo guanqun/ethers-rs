@@ -138,7 +138,7 @@ mod tests {
         let tx = TransactionRequest::new()
             .to(Address::zero())
             .value(U256::from(100));
-        let tx = TypedTransaction::from(tx);
+        let tx: TypedTransaction = tx.into();
         let serialized = serde_json::to_string(&tx).unwrap();
 
         // deserializes to either the envelope type or the inner type

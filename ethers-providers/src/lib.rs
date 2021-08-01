@@ -336,7 +336,7 @@ pub trait Middleware: Sync + Send + Debug {
 
     async fn call(
         &self,
-        tx: &TransactionRequest,
+        tx: &TypedTransaction,
         block: Option<BlockId>,
     ) -> Result<Bytes, Self::Error> {
         self.inner().call(tx, block).await.map_err(FromErr::from)
@@ -501,9 +501,9 @@ pub trait Middleware: Sync + Send + Debug {
     // Parity `trace` support
 
     /// Executes the given call and returns a number of possible traces for it
-    async fn trace_call(
+    async fn trace_call<T: Into<TypedTransaction> + Send + Sync>(
         &self,
-        req: TransactionRequest,
+        req: T,
         trace_type: Vec<TraceType>,
         block: Option<BlockNumber>,
     ) -> Result<BlockTrace, Self::Error> {

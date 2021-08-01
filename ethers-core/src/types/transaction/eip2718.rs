@@ -1,6 +1,6 @@
 use super::{eip1559::Eip1559TransactionRequest, eip2930::Eip2930TransactionRequest};
 use crate::{
-    types::{TransactionRequest, H256, U64},
+    types::{Address, Bytes, NameOrAddress, TransactionRequest, H256, U64},
     utils::keccak256,
 };
 use serde::{Deserialize, Serialize};
@@ -17,6 +17,53 @@ pub enum TypedTransaction {
     // 0x02
     #[serde(rename = "0x02")]
     Eip1559(Eip1559TransactionRequest),
+}
+
+impl TypedTransaction {
+    pub fn from(&self) -> Option<&Address> {
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.from.as_ref(),
+            Eip2930(inner) => inner.tx.from.as_ref(),
+            Eip1559(inner) => inner.from.as_ref(),
+        }
+    }
+
+    pub fn to(&self) -> Option<&NameOrAddress> {
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.to.as_ref(),
+            Eip2930(inner) => inner.tx.to.as_ref(),
+            Eip1559(inner) => inner.to.as_ref(),
+        }
+    }
+
+    pub fn to_mut(&mut self) -> Option<&mut NameOrAddress> {
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.to.as_mut(),
+            Eip2930(inner) => inner.tx.to.as_mut(),
+            Eip1559(inner) => inner.to.as_mut(),
+        }
+    }
+
+    pub fn data(&self) -> Option<&Bytes> {
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.data.as_ref(),
+            Eip2930(inner) => inner.tx.data.as_ref(),
+            Eip1559(inner) => inner.data.as_ref(),
+        }
+    }
+
+    pub fn data_mut(&mut self) -> Option<&mut Bytes> {
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.data.as_mut(),
+            Eip2930(inner) => inner.tx.data.as_mut(),
+            Eip1559(inner) => inner.data.as_mut(),
+        }
+    }
 }
 
 impl TypedTransaction {

@@ -1,6 +1,6 @@
 use super::{eip1559::Eip1559TransactionRequest, eip2930::Eip2930TransactionRequest};
 use crate::{
-    types::{Address, Bytes, NameOrAddress, TransactionRequest, H256, U64, Signature},
+    types::{Address, Bytes, NameOrAddress, TransactionRequest, H256, U64, Signature, U256},
     utils::keccak256,
 };
 use serde::{Deserialize, Serialize};
@@ -45,6 +45,25 @@ impl TypedTransaction {
             Legacy(inner) => inner.to = Some(to),
             Eip2930(inner) => inner.tx.to = Some(to),
             Eip1559(inner) => inner.to = Some(to),
+        };
+    }
+
+    pub fn nonce(&self) -> Option<&U256> {
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.nonce.as_ref(),
+            Eip2930(inner) => inner.tx.nonce.as_ref(),
+            Eip1559(inner) => inner.nonce.as_ref(),
+        }
+    }
+
+    pub fn set_nonce<T: Into<U256>>(&mut self, nonce: T) {
+        let nonce = nonce.into();
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.nonce = Some(nonce),
+            Eip2930(inner) => inner.tx.nonce = Some(nonce),
+            Eip1559(inner) => inner.nonce = Some(nonce),
         };
     }
 

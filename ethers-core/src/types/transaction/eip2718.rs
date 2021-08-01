@@ -1,6 +1,6 @@
 use super::{eip1559::Eip1559TransactionRequest, eip2930::Eip2930TransactionRequest};
 use crate::{
-    types::{Address, Bytes, NameOrAddress, TransactionRequest, H256, U64, Signature, U256},
+    types::{Address, Bytes, NameOrAddress, Signature, TransactionRequest, H256, U256, U64},
     utils::keccak256,
 };
 use serde::{Deserialize, Serialize};

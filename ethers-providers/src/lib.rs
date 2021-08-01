@@ -221,10 +221,7 @@ pub trait Middleware: Sync + Send + Debug {
                 }
 
                 if let Some(from) = inner.from {
-                    let nonce = maybe(
-                        inner.nonce,
-                        self.get_transaction_count(from, block)
-                    ).await?;
+                    let nonce = maybe(inner.nonce, self.get_transaction_count(from, block)).await?;
                     inner.nonce = Some(nonce);
                 }
 
@@ -246,10 +243,8 @@ pub trait Middleware: Sync + Send + Debug {
                 use futures_util::join;
 
                 if let Some(from) = inner.tx.from {
-                    let nonce = maybe(
-                        inner.tx.nonce,
-                        self.get_transaction_count(from, block)
-                    ).await?;
+                    let nonce =
+                        maybe(inner.tx.nonce, self.get_transaction_count(from, block)).await?;
                     inner.tx.nonce = Some(nonce);
                 }
 
@@ -272,10 +267,7 @@ pub trait Middleware: Sync + Send + Debug {
                 use futures_util::join;
 
                 if let Some(from) = inner.from {
-                    let nonce = maybe(
-                        inner.nonce,
-                        self.get_transaction_count(from, block)
-                    ).await?;
+                    let nonce = maybe(inner.nonce, self.get_transaction_count(from, block)).await?;
                     inner.nonce = Some(nonce);
                 }
 
@@ -298,9 +290,9 @@ pub trait Middleware: Sync + Send + Debug {
         self.inner().get_block_number().await.map_err(FromErr::from)
     }
 
-    async fn send_transaction(
+    async fn send_transaction<T: Into<TypedTransaction> + Send + Sync>(
         &self,
-        tx: TypedTransaction,
+        tx: T,
         block: Option<BlockId>,
     ) -> Result<PendingTransaction<'_, Self::Provider>, Self::Error> {
         self.inner()

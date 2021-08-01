@@ -1,6 +1,6 @@
 use super::{eip1559::Eip1559TransactionRequest, eip2930::Eip2930TransactionRequest};
 use crate::{
-    types::{Address, Bytes, NameOrAddress, TransactionRequest, H256, U64},
+    types::{Address, Bytes, NameOrAddress, TransactionRequest, H256, U64, Signature},
     utils::keccak256,
 };
 use serde::{Deserialize, Serialize};
@@ -38,13 +38,14 @@ impl TypedTransaction {
         }
     }
 
-    pub fn to_mut(&mut self) -> Option<&mut NameOrAddress> {
+    pub fn set_to<T: Into<NameOrAddress>>(&mut self, to: T) {
+        let to = to.into();
         use TypedTransaction::*;
         match self {
-            Legacy(inner) => inner.to.as_mut(),
-            Eip2930(inner) => inner.tx.to.as_mut(),
-            Eip1559(inner) => inner.to.as_mut(),
-        }
+            Legacy(inner) => inner.to = Some(to),
+            Eip2930(inner) => inner.tx.to = Some(to),
+            Eip1559(inner) => inner.to = Some(to),
+        };
     }
 
     pub fn data(&self) -> Option<&Bytes> {
@@ -56,12 +57,31 @@ impl TypedTransaction {
         }
     }
 
-    pub fn data_mut(&mut self) -> Option<&mut Bytes> {
+    pub fn set_data(&mut self, data: Bytes) {
         use TypedTransaction::*;
         match self {
-            Legacy(inner) => inner.data.as_mut(),
-            Eip2930(inner) => inner.tx.data.as_mut(),
-            Eip1559(inner) => inner.data.as_mut(),
+            Legacy(inner) => inner.data = Some(data),
+            Eip2930(inner) => inner.tx.data = Some(data),
+            Eip1559(inner) => inner.data = Some(data),
+        };
+    }
+
+    pub fn rlp_signed(&self, signature: &Signature) -> Bytes {
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.rlp_signed(signature),
+            Eip2930(inner) => inner.tx.rlp_signed(signature),
+            Eip1559(inner) => inner.rlp_signed(signature),
+        }
+    }
+
+    pub fn rlp<T: Into<U64>>(&self, chain_id: T) -> Bytes {
+        let chain_id = chain_id.into();
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.rlp(chain_id),
+            Eip2930(inner) => inner.tx.rlp(chain_id),
+            Eip1559(inner) => inner.rlp(chain_id),
         }
     }
 }

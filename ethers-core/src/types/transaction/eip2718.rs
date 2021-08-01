@@ -84,29 +84,10 @@ impl TypedTransaction {
             Eip1559(inner) => inner.rlp(chain_id),
         }
     }
-}
 
-impl TypedTransaction {
     /// Hashes the transaction's data with the provided chain id
     pub fn sighash<T: Into<U64>>(&self, chain_id: T) -> H256 {
-        let encoded = match self {
-            TypedTransaction::Legacy(ref tx) => {
-                let mut encoded = vec![0];
-                encoded.extend_from_slice(tx.rlp(chain_id).as_ref());
-                encoded
-            }
-            TypedTransaction::Eip2930(ref tx) => {
-                let mut encoded = vec![1];
-                encoded.extend_from_slice(tx.rlp(chain_id).as_ref());
-                encoded
-            }
-            TypedTransaction::Eip1559(ref tx) => {
-                let mut encoded = vec![2];
-                encoded.extend_from_slice(tx.rlp(chain_id).as_ref());
-                encoded
-            }
-        };
-        keccak256(encoded).into()
+        keccak256(self.rlp(chain_id)).into()
     }
 }
 

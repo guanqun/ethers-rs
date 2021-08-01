@@ -29,6 +29,16 @@ impl TypedTransaction {
         }
     }
 
+    pub fn set_from(&mut self, from: Address) {
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.from = Some(from),
+            Eip2930(inner) => inner.tx.from = Some(from),
+            Eip1559(inner) => inner.from = Some(from),
+        };
+    }
+
+
     pub fn to(&self) -> Option<&NameOrAddress> {
         use TypedTransaction::*;
         match self {

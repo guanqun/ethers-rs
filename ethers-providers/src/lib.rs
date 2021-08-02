@@ -75,7 +75,7 @@ mod pending_transaction;
 pub use pending_transaction::PendingTransaction;
 
 mod stream;
-pub use futures_util::StreamExt;
+pub use futures_util::{StreamExt, join};
 pub use stream::{interval, FilterWatcher, TransactionStream, DEFAULT_POLL_INTERVAL};
 
 mod pubsub;
@@ -214,7 +214,6 @@ pub trait Middleware: Sync + Send + Debug {
                     let addr = self.resolve_name(ens_name).await?;
                     inner.to = Some(addr.into());
                 };
-                use futures_util::join;
 
                 if inner.from.is_none() {
                     inner.from = self.default_sender();
@@ -239,7 +238,9 @@ pub trait Middleware: Sync + Send + Debug {
                     inner.tx.to = Some(addr.into());
                 };
 
-                use futures_util::join;
+                if inner.tx.from.is_none() {
+                    inner.tx.from = self.default_sender();
+                }
 
                 let (gas_price, gas) = join!(
                     maybe(inner.tx.gas_price, self.get_gas_price()),
@@ -260,7 +261,9 @@ pub trait Middleware: Sync + Send + Debug {
                     inner.to = Some(addr.into());
                 };
 
-                use futures_util::join;
+                if inner.from.is_none() {
+                    inner.from = self.default_sender();
+                }
 
                 let (max_priority_fee_per_gas, max_fee_per_gas, gas) = join!(
                     // TODO: Replace with algorithms using eth_feeHistory

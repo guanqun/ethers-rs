@@ -76,6 +76,58 @@ impl TypedTransaction {
         };
     }
 
+    pub fn value(&self) -> Option<&U256> {
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.value.as_ref(),
+            Eip2930(inner) => inner.tx.value.as_ref(),
+            Eip1559(inner) => inner.value.as_ref(),
+        }
+    }
+
+    pub fn set_value<T: Into<U256>>(&mut self, value: T) {
+        let value = value.into();
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.value = Some(value),
+            Eip2930(inner) => inner.tx.value = Some(value),
+            Eip1559(inner) => inner.value = Some(value),
+        };
+    }
+
+    pub fn gas(&self) -> Option<&U256> {
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.gas.as_ref(),
+            Eip2930(inner) => inner.tx.gas.as_ref(),
+            Eip1559(inner) => inner.gas.as_ref(),
+        }
+    }
+
+    pub fn set_gas<T: Into<U256>>(&mut self, gas: T) {
+        let gas = gas.into();
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.gas = Some(gas),
+            Eip2930(inner) => inner.tx.gas = Some(gas),
+            Eip1559(inner) => inner.gas = Some(gas),
+        };
+    }
+
+    pub fn set_gas_price<T: Into<U256>>(&mut self, gas_price: T) {
+        let gas_price = gas_price.into();
+        use TypedTransaction::*;
+        match self {
+            Legacy(inner) => inner.gas_price = Some(gas_price),
+            Eip2930(inner) => inner.tx.gas_price = Some(gas_price),
+            Eip1559(inner) => {
+                inner.max_fee_per_gas = Some(gas_price);
+                inner.max_priority_fee_per_gas = Some(gas_price);
+            }
+        };
+    }
+
+
     pub fn data(&self) -> Option<&Bytes> {
         use TypedTransaction::*;
         match self {

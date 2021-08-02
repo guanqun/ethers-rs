@@ -38,7 +38,6 @@ impl TypedTransaction {
         };
     }
 
-
     pub fn to(&self) -> Option<&NameOrAddress> {
         use TypedTransaction::*;
         match self {

@@ -127,7 +127,6 @@ impl TypedTransaction {
         };
     }
 
-
     pub fn data(&self) -> Option<&Bytes> {
         use TypedTransaction::*;
         match self {

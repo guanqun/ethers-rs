@@ -75,7 +75,7 @@ mod pending_transaction;
 pub use pending_transaction::PendingTransaction;
 
 mod stream;
-pub use futures_util::{StreamExt, join};
+pub use futures_util::{join, StreamExt};
 pub use stream::{interval, FilterWatcher, TransactionStream, DEFAULT_POLL_INTERVAL};
 
 mod pubsub;

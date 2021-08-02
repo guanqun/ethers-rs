@@ -88,7 +88,6 @@ impl From<Eip1559TransactionRequest> for super::request::TransactionRequest {
             gateway_fee: None,
         }
     }
-
 }
 
 impl Eip1559TransactionRequest {

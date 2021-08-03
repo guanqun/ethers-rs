@@ -1,9 +1,10 @@
 use super::{eip1559::Eip1559TransactionRequest, eip2930::Eip2930TransactionRequest};
 use crate::{
     types::{Address, Bytes, NameOrAddress, Signature, TransactionRequest, H256, U256, U64},
-    utils::keccak256,
 };
 use serde::{Deserialize, Serialize};
+use crate::utils::keccak256;
+use bytes::BytesMut;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 #[serde(tag = "type")]
@@ -145,28 +146,50 @@ impl TypedTransaction {
         };
     }
 
-    pub fn rlp_signed(&self, signature: &Signature) -> Bytes {
+    /// This includes the header byte
+    pub fn encode_signed(&self, signature: &Signature) -> Bytes {
         use TypedTransaction::*;
+        let mut buf = BytesMut::new();
         match self {
-            Legacy(inner) => inner.rlp_signed(signature),
-            Eip2930(inner) => inner.tx.rlp_signed(signature),
-            Eip1559(inner) => inner.rlp_signed(signature),
+            Legacy(inner) => {
+                buf.extend_from_slice(&[0x0]);
+                inner.rlp_signed_with_buffer(signature, buf)
+            },
+            Eip2930(inner) => {
+                buf.extend_from_slice(&[0x1]);
+                inner.tx.rlp_signed_with_buffer(signature, buf)
+            },
+            Eip1559(inner) => {
+                buf.extend_from_slice(&[0x2]);
+                inner.rlp_signed_with_buffer(signature, buf)
+            },
         }
     }
 
-    pub fn rlp<T: Into<U64>>(&self, chain_id: T) -> Bytes {
+    /// This includes the header byte
+    pub fn encode_unsigned<T: Into<U64>>(&self, chain_id: T) -> Bytes {
         let chain_id = chain_id.into();
         use TypedTransaction::*;
+        let mut buf = BytesMut::new();
         match self {
-            Legacy(inner) => inner.rlp(chain_id),
-            Eip2930(inner) => inner.tx.rlp(chain_id),
-            Eip1559(inner) => inner.rlp(chain_id),
+            Legacy(inner) => {
+                buf.extend_from_slice(&[0x0]);
+                inner.rlp_with_buffer(chain_id, buf)
+            },
+            Eip2930(inner) => {
+                buf.extend_from_slice(&[0x1]);
+                inner.tx.rlp_with_buffer(chain_id, buf)
+            },
+            Eip1559(inner) => {
+                buf.extend_from_slice(&[0x2]);
+                inner.rlp_with_buffer(chain_id, buf)
+            },
         }
     }
 
     /// Hashes the transaction's data with the provided chain id
     pub fn sighash<T: Into<U64>>(&self, chain_id: T) -> H256 {
-        keccak256(self.rlp(chain_id)).into()
+        keccak256(self.encode_unsigned(chain_id).as_ref()).into()
     }
 }
 

@@ -127,7 +127,7 @@ where
             .map_err(SignerMiddlewareError::SignerError)?;
 
         // Return the raw rlp-encoded signed transaction
-        Ok(tx.rlp_signed(&signature))
+        Ok(tx.encode_signed(&signature))
     }
 
     /// Returns the client's address

@@ -1,12 +1,12 @@
 //! Transaction types
 use super::{rlp_opt, NUM_TX_FIELDS};
 use crate::{
-    types::{Address, Bytes, NameOrAddress, Signature, H256, U256, U64},
-    utils::keccak256,
+    types::{Address, Bytes, NameOrAddress, Signature, U256, U64},
 };
 
 use rlp::RlpStream;
 use serde::{Deserialize, Serialize};
+use bytes::BytesMut;
 
 /// Parameters for sending a transaction
 #[derive(Clone, Default, Serialize, Deserialize, PartialEq, Eq, Debug)]
@@ -120,14 +120,9 @@ impl TransactionRequest {
         self
     }
 
-    /// Hashes the transaction's data with the provided chain id
-    pub fn sighash<T: Into<U64>>(&self, chain_id: T) -> H256 {
-        keccak256(self.rlp(chain_id).as_ref()).into()
-    }
-
     /// Gets the unsigned transaction's RLP encoding
-    pub fn rlp<T: Into<U64>>(&self, chain_id: T) -> Bytes {
-        let mut rlp = RlpStream::new();
+    pub fn rlp_with_buffer<T: Into<U64>>(&self, chain_id: T, buf: BytesMut) -> Bytes {
+        let mut rlp = RlpStream::new_with_buffer(buf);
         rlp.begin_list(NUM_TX_FIELDS);
         self.rlp_base(&mut rlp);
 
@@ -140,8 +135,8 @@ impl TransactionRequest {
     }
 
     /// Produces the RLP encoding of the transaction with the provided signature
-    pub fn rlp_signed(&self, signature: &Signature) -> Bytes {
-        let mut rlp = RlpStream::new();
+    pub fn rlp_signed_with_buffer(&self, signature: &Signature, buf: BytesMut) -> Bytes {
+        let mut rlp = RlpStream::new_with_buffer(buf);
         rlp.begin_list(NUM_TX_FIELDS);
         self.rlp_base(&mut rlp);
 

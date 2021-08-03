@@ -1,7 +1,6 @@
 use super::{eip2930::AccessList, rlp_opt};
 use crate::{
-    types::{Address, Bytes, NameOrAddress, Signature, H256, U256, U64},
-    utils::keccak256,
+    types::{Address, Bytes, NameOrAddress, Signature, U256, U64},
 };
 use rlp::RlpStream;
 
@@ -9,6 +8,8 @@ use rlp::RlpStream;
 const NUM_TX_FIELDS: usize = 9;
 
 use serde::{Deserialize, Serialize};
+use bytes::BytesMut;
+
 /// Parameters for sending a transaction
 #[derive(Clone, Default, Serialize, Deserialize, PartialEq, Eq, Debug)]
 pub struct Eip1559TransactionRequest {
@@ -68,6 +69,9 @@ pub struct Eip1559TransactionRequest {
     /// Represents the maximum amount that a user is willing to pay for their tx (inclusive of baseFeePerGas and maxPriorityFeePerGas).
     /// The difference between maxFeePerGas and baseFeePerGas + maxPriorityFeePerGas is “refunded” to the user.
     pub max_fee_per_gas: Option<U256>,
+
+    #[serde(rename = "chainId", default = "U64::one")]
+    pub chain_id: U64,
 }
 
 impl From<Eip1559TransactionRequest> for super::request::TransactionRequest {
@@ -152,39 +156,43 @@ impl Eip1559TransactionRequest {
         self
     }
 
-    /// Hashes the transaction's data with the provided chain id
-    pub fn sighash<T: Into<U64>>(&self, chain_id: T) -> H256 {
-        keccak256(self.rlp(chain_id).as_ref()).into()
+    /// Sets the `chain_id` field in the transaction to the provided value
+    pub fn chain_id<T: Into<U64>>(mut self, chain_id: T) -> Self {
+        self.chain_id = chain_id.into();
+        self
     }
 
     /// Gets the unsigned transaction's RLP encoding
-    pub fn rlp<T: Into<U64>>(&self, chain_id: T) -> Bytes {
-        let mut rlp = RlpStream::new();
+    /// 0x2 | rlp([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, destination, value, data, accessList])
+    pub fn rlp_with_buffer<T: Into<U64>>(&self, chain_id: T, buf: BytesMut) -> Bytes {
+        assert_eq!(self.chain_id, chain_id.into());
+
+        let mut rlp = RlpStream::new_with_buffer(buf);
         rlp.begin_list(NUM_TX_FIELDS);
         self.rlp_base(&mut rlp);
 
-        // Only hash the 3 extra fields when preparing the
-        // data to sign if chain_id is present
-        rlp.append(&chain_id.into());
-        rlp.append(&0u8);
-        rlp.append(&0u8);
         rlp.out().freeze().into()
     }
 
     /// Produces the RLP encoding of the transaction with the provided signature
-    pub fn rlp_signed(&self, signature: &Signature) -> Bytes {
-        let mut rlp = RlpStream::new();
-        rlp.begin_list(NUM_TX_FIELDS);
+    /// 0x2 | rlp([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, destination, value, data, accessList, signatureYParity, signatureR, signatureS])
+    pub fn rlp_signed_with_buffer(&self, signature: &Signature, buf: BytesMut) -> Bytes {
+        let mut rlp = RlpStream::new_with_buffer(buf);
+        rlp.begin_list(NUM_TX_FIELDS + 3 /* 3 signed fields */);
         self.rlp_base(&mut rlp);
 
-        // append the signature
-        rlp.append(&signature.v);
+        // append the signature, v is either 0 or 1
+        // assume the signature is calculated in eip155 style.
+        let v = signature.v - self.chain_id.as_u64() * 2 - 35;
+        rlp.append(&v);
         rlp.append(&signature.r);
         rlp.append(&signature.s);
         rlp.out().freeze().into()
     }
 
+    /// rlp([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, destination, value, data, accessList])
     pub(crate) fn rlp_base(&self, rlp: &mut RlpStream) {
+        rlp.append(&self.chain_id);
         rlp_opt(rlp, &self.nonce);
         rlp_opt(rlp, &self.max_priority_fee_per_gas);
         rlp_opt(rlp, &self.max_fee_per_gas);
@@ -192,6 +200,73 @@ impl Eip1559TransactionRequest {
         rlp_opt(rlp, &self.to.as_ref());
         rlp_opt(rlp, &self.value);
         rlp_opt(rlp, &self.data.as_ref().map(|d| d.as_ref()));
-        rlp_opt(rlp, &self.access_list);
+        rlp.append(&self.access_list);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::transaction::eip2718::TypedTransaction;
+    use std::str::FromStr;
+    use ethabi::ethereum_types::H256;
+
+    #[test]
+    fn test_typed_tx_without_access_list() {
+        let tx: Eip1559TransactionRequest = serde_json::from_str(
+            r#"{
+            "gas": "0x186a0",
+            "maxFeePerGas": "0x77359400",
+            "maxPriorityFeePerGas": "0x77359400",
+            "data": "0x5544",
+            "nonce": "0x2",
+            "to": "0x96216849c49358B10257cb55b28eA603c874b05E",
+            "value": "0x5af3107a4000",
+            "type": "0x2",
+            "chainId": "0x539",
+            "accessList": [],
+            "v": "0x1",
+            "r": "0xc3000cd391f991169ebfd5d3b9e93c89d31a61c998a21b07a11dc6b9d66f8a8e",
+            "s": "0x22cfe8424b2fbd78b16c9911da1be2349027b0a3c40adf4b6459222323773f74"
+        }"#).unwrap();
+
+        let envelope = TypedTransaction::Eip1559(tx);
+
+        let expected = H256::from_str("0xa1ea3121940930f7e7b54506d80717f14c5163807951624c36354202a8bffda6").unwrap();
+        let actual = envelope.sighash(0x539);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_typed_tx() {
+        let tx: Eip1559TransactionRequest = serde_json::from_str(
+            r#"{
+            "gas": "0x186a0",
+            "maxFeePerGas": "0x77359400",
+            "maxPriorityFeePerGas": "0x77359400",
+            "data": "0x5544",
+            "nonce": "0x2",
+            "to": "0x96216849c49358B10257cb55b28eA603c874b05E",
+            "value": "0x5af3107a4000",
+            "type": "0x2",
+            "accessList": [
+                {
+                    "address": "0x0000000000000000000000000000000000000001",
+                    "storageKeys": [
+                        "0x0100000000000000000000000000000000000000000000000000000000000000"
+                    ]
+                }
+            ],
+            "chainId": "0x539",
+            "v": "0x1",
+            "r": "0xc3000cd391f991169ebfd5d3b9e93c89d31a61c998a21b07a11dc6b9d66f8a8e",
+            "s": "0x22cfe8424b2fbd78b16c9911da1be2349027b0a3c40adf4b6459222323773f74"
+        }"#).unwrap();
+
+        let envelope = TypedTransaction::Eip1559(tx);
+
+        let expected = H256::from_str("0x090b19818d9d087a49c3d2ecee4829ee4acea46089c1381ac5e588188627466d").unwrap();
+        let actual = envelope.sighash(0x539);
+        assert_eq!(expected, actual);
     }
 }

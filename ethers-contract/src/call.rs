@@ -10,6 +10,7 @@ use ethers_providers::{Middleware, PendingTransaction, ProviderError};
 use std::{fmt::Debug, marker::PhantomData, sync::Arc};
 
 use thiserror::Error as ThisError;
+use ethers_core::abi::ethereum_types::U64;
 
 #[derive(ThisError, Debug)]
 /// An Error which is thrown when interacting with a smart contract
@@ -86,6 +87,27 @@ impl<M, D: Detokenize> ContractCall<M, D> {
     /// `max_fee_per_gas` and `max_priority_fee_per_gas` to the same value
     pub fn gas_price<T: Into<U256>>(mut self, gas_price: T) -> Self {
         self.tx.set_gas_price(gas_price);
+        self
+    }
+
+    pub fn max_fee_per_gas<T: Into<U256>>(mut self, max_fee_per_gas: T) -> Self {
+        if let TypedTransaction::Eip1559(inner) = &mut self.tx {
+            inner.max_fee_per_gas = Some(max_fee_per_gas.into());
+        }
+        self
+    }
+
+    pub fn max_priority_fee_per_gas<T: Into<U256>>(mut self, max_priority_fee_per_gas: T) -> Self {
+        if let TypedTransaction::Eip1559(inner) = &mut self.tx {
+            inner.max_priority_fee_per_gas = Some(max_priority_fee_per_gas.into());
+        }
+        self
+    }
+
+    pub fn chain_id<T: Into<U64>>(mut self, chain_id: T) -> Self {
+        if let TypedTransaction::Eip1559(inner) = &mut self.tx {
+            inner.chain_id = chain_id.into();
+        }
         self
     }
 

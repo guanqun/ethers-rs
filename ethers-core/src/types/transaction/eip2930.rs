@@ -2,13 +2,13 @@ use super::{request::TransactionRequest, NUM_TX_FIELDS};
 use crate::types::{Address, Bytes, Signature, H256, U256, U64};
 
 use rlp::RlpStream;
-use rlp_derive::RlpEncodable;
+use rlp_derive::{RlpEncodable, RlpEncodableWrapper};
 use serde::{Deserialize, Serialize};
 
 const NUM_EIP2930_FIELDS: usize = NUM_TX_FIELDS + 1;
 
 /// Access list
-#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, RlpEncodable)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, RlpEncodableWrapper)]
 pub struct AccessList(pub Vec<AccessListItem>);
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

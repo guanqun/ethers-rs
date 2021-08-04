@@ -72,6 +72,10 @@ pub struct Block<TX> {
     #[cfg(not(feature = "celo"))]
     pub nonce: Option<U64>,
 
+    /// Base fee per unit of gas (if past London)
+    #[serde(rename = "baseFeePerGas")]
+    pub base_fee_per_gas: Option<U256>,
+
     #[cfg(feature = "celo")]
     #[cfg_attr(docsrs, doc(cfg(feature = "celo")))]
     /// The block's randomness

@@ -63,6 +63,7 @@ pub struct SignerMiddleware<M, S> {
     pub(crate) inner: M,
     pub(crate) signer: S,
     pub(crate) address: Address,
+    should_confirm: bool,
 }
 
 impl<M: Middleware, S: Signer> FromErr<M::Error> for SignerMiddlewareError<M, S> {
@@ -94,6 +95,8 @@ pub enum SignerMiddlewareError<M: Middleware, S: Signer> {
     /// Thrown if a signature is requested from a different address
     #[error("specified from address is not signer")]
     WrongSigner,
+    #[error("user aborted")]
+    UserAborted,
 }
 
 // Helper functions for locally signing transactions
@@ -105,7 +108,7 @@ where
     /// Creates a new client from the provider and signer.
     pub fn new(inner: M, signer: S) -> Self {
         let address = signer.address();
-        SignerMiddleware { inner, signer, address }
+        SignerMiddleware { inner, signer, address, should_confirm: false }
     }
 
     /// Signs and returns the RLP encoding of the signed transaction
@@ -118,6 +121,11 @@ where
 
         // Return the raw rlp-encoded signed transaction
         Ok(tx.rlp_signed(self.signer.chain_id(), &signature))
+    }
+
+    /// Confirm the transaction before actually sending it out
+    pub fn confirm_before_sending_out(&mut self) {
+        self.should_confirm = true;
     }
 
     /// Returns the client's address
@@ -218,6 +226,14 @@ where
                 .send_transaction(tx, block)
                 .await
                 .map_err(SignerMiddlewareError::MiddlewareError)
+        }
+
+        if self.should_confirm {
+            let info = format!("transaction: {:?}", &tx);
+
+            if !dialoguer::Confirm::new().with_prompt(info).interact().unwrap_or_default() {
+                return Err(SignerMiddlewareError::UserAborted)
+            }
         }
 
         // if we have a nonce manager set, we should try handling the result in

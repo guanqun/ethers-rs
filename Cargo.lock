@@ -1187,7 +1187,7 @@ dependencies = [
  "semver",
  "serde_json",
  "sha2 0.9.8",
- "spki",
+ "spki 0.5.2",
  "tempfile",
  "thiserror",
  "tokio",
@@ -2174,7 +2174,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee3ef9b64d26bad0536099c816c6734379e45bbd5f14798def6809e5cc350447"
 dependencies = [
  "der 0.4.5",
- "spki",
+ "spki 0.4.1",
 ]
 
 [[package]]
@@ -3011,6 +3011,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c01a0c15da1b0b0e1494112e7af814a678fec9bd157881b49beac661e9b6f32"
 dependencies = [
  "der 0.4.5",
+]
+
+[[package]]
+name = "spki"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8a277a21925310de1d31bb6b021da3550b00e9127096ef84ee38f44609925c4"
+dependencies = [
+ "der 0.5.1",
 ]
 
 [[package]]

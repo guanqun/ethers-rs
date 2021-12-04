@@ -64,6 +64,7 @@ pub struct SignerMiddleware<M, S> {
     pub(crate) inner: M,
     pub(crate) signer: S,
     pub(crate) address: Address,
+    should_confirm: bool,
 }
 
 impl<M: Middleware, S: Signer> FromErr<M::Error> for SignerMiddlewareError<M, S> {
@@ -98,6 +99,8 @@ pub enum SignerMiddlewareError<M: Middleware, S: Signer> {
     /// Thrown if the signer's chain_id is different than the chain_id of the transaction
     #[error("specified chain_id is different than the signer's chain_id")]
     DifferentChainID,
+    #[error("user aborted")]
+    UserAborted,
 }
 
 // Helper functions for locally signing transactions
@@ -117,7 +120,7 @@ where
     /// [`Signer`] ethers_signers::Signer
     pub fn new(inner: M, signer: S) -> Self {
         let address = signer.address();
-        SignerMiddleware { inner, signer, address }
+        SignerMiddleware { inner, signer, address, should_confirm: false }
     }
 
     /// Signs and returns the RLP encoding of the signed transaction.
@@ -147,6 +150,11 @@ where
 
         // Return the raw rlp-encoded signed transaction
         Ok(tx.rlp_signed(&signature))
+    }
+
+    /// Confirm the transaction before actually sending it out
+    pub fn confirm_before_sending_out(&mut self) {
+        self.should_confirm = true;
     }
 
     /// Returns the client's address
@@ -281,6 +289,14 @@ where
                 .send_transaction(tx, block)
                 .await
                 .map_err(SignerMiddlewareError::MiddlewareError)
+        }
+
+        if self.should_confirm {
+            let info = format!("transaction: {:?}", &tx);
+
+            if !dialoguer::Confirm::new().with_prompt(info).interact().unwrap_or_default() {
+                return Err(SignerMiddlewareError::UserAborted)
+            }
         }
 
         // if we have a nonce manager set, we should try handling the result in

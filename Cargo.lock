@@ -1340,6 +1340,7 @@ dependencies = [
  "hex",
  "http",
  "once_cell",
+ "itertools",
  "parking_lot",
  "pin-project",
  "reqwest",

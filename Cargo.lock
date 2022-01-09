@@ -1510,6 +1510,7 @@ dependencies = [
  "http",
  "once_cell",
  "parking_lot 0.11.2",
+ "itertools",
  "pin-project",
  "reqwest",
  "serde",

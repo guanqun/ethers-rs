@@ -27,6 +27,7 @@ url = { version = "2.3.1", default-features = false }
 auto_impl = { version = "1.0.1", default-features = false }
 http = { version = "0.2" }
 base64 = "0.21"
+itertools = "0.10.3"
 
 # required for implementing stream on the filters
 futures-core = { version = "0.3.16", default-features = false }

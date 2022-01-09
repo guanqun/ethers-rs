@@ -320,6 +320,16 @@ impl Filter {
         self.topic0(hash)
     }
 
+    /// Given the events in string form, it would filter multiple events at the same time
+    pub fn multiple_events(mut self, multiple_event_names: Vec<String>) -> Self {
+        let topics: Vec<H256> = multiple_event_names
+            .into_iter()
+            .map(|event_name| H256::from(keccak256(event_name.as_bytes())))
+            .collect();
+        self.topics[0] = Some(ValueOrArray::Array(topics));
+        self
+    }
+
     /// Sets topic0 (the event name for non-anonymous events)
     #[must_use]
     pub fn topic0<T: Into<ValueOrArray<H256>>>(mut self, topic: T) -> Self {

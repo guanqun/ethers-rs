@@ -1299,6 +1299,7 @@ dependencies = [
  "futures-timer",
  "futures-util",
  "hex",
+ "itertools",
  "parking_lot",
  "pin-project",
  "reqwest",

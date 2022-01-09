@@ -644,19 +644,33 @@ impl<P: JsonRpcClient> Middleware for Provider<P> {
         Ok(H256::from_slice(&Vec::from_hex(value)?))
     }
 
-    async fn get_multiple_storages(&self, froms: Vec<Address>, locations: Vec<H256>, block: Option<BlockId>) -> Result<Vec<Vec<H256>>, ProviderError> {
+    async fn get_multiple_storages(
+        &self,
+        froms: Vec<Address>,
+        locations: Vec<H256>,
+        block: Option<BlockId>,
+    ) -> Result<Vec<Vec<H256>>, ProviderError> {
         let froms = utils::serialize(&froms);
         let locations = utils::serialize(&locations);
         let block = utils::serialize(&block.unwrap_or_else(|| BlockNumber::Latest.into()));
 
         // get the hex encoded value.
-        let values: Vec<Vec<String>> = self.request("eth_getMultipleStorages", [froms, locations, block]).await?;
+        let values: Vec<Vec<String>> =
+            self.request("eth_getMultipleStorages", [froms, locations, block]).await?;
 
-        let ret: Vec<Vec<H256>> = values.into_iter().map(|inner_vec| inner_vec.into_iter().map(|v| {
-            // get rid of the 0x prefix and left pad it with zeroes.
-            let value = format!("{:0>64}", v.replace("0x", ""));
-            Vec::from_hex(value).map(|hex_vec| H256::from_slice(&hex_vec))
-        }).try_collect()).try_collect()?;
+        let ret: Vec<Vec<H256>> = values
+            .into_iter()
+            .map(|inner_vec| {
+                inner_vec
+                    .into_iter()
+                    .map(|v| {
+                        // get rid of the 0x prefix and left pad it with zeroes.
+                        let value = format!("{:0>64}", v.replace("0x", ""));
+                        Vec::from_hex(value).map(|hex_vec| H256::from_slice(&hex_vec))
+                    })
+                    .try_collect()
+            })
+            .try_collect()?;
 
         Ok(ret)
     }

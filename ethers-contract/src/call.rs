@@ -2,7 +2,7 @@ use super::base::{decode_function_data, AbiError};
 use ethers_core::{
     abi::{AbiDecode, AbiEncode, Detokenize, Function, InvalidOutputType, Tokenizable},
     types::{
-        transaction::eip2718::TypedTransaction, Address, BlockId, Bytes, Selector, NameOrAddress,
+        transaction::eip2718::TypedTransaction, Address, BlockId, Bytes, NameOrAddress, Selector,
         TransactionRequest, U256,
     },
     utils::id,

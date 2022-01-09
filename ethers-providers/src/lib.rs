@@ -479,7 +479,12 @@ pub trait Middleware: Sync + Send + Debug {
         self.inner().get_storage_at(from, location, block).await.map_err(FromErr::from)
     }
 
-    async fn get_multiple_storages(&self, froms: Vec<Address>, locations: Vec<H256>, block: Option<BlockId>) -> Result<Vec<Vec<H256>>, ProviderError> {
+    async fn get_multiple_storages(
+        &self,
+        froms: Vec<Address>,
+        locations: Vec<H256>,
+        block: Option<BlockId>,
+    ) -> Result<Vec<Vec<H256>>, ProviderError> {
         self.inner().get_multiple_storages(froms, locations, block).await.map_err(FromErr::from)
     }
 

@@ -98,6 +98,12 @@ pub(crate) fn derive_eth_event_impl(input: DeriveInput) -> TokenStream {
     let anon = attributes.anonymous.map(|(b, _)| b).unwrap_or_default();
 
     let ethevent_impl = quote! {
+        impl #name {
+            pub const fn const_signature() -> #core_crate::types::H256 {
+                #signature
+            }
+        }
+
         impl #contract_crate::EthEvent for #name {
 
             fn name() -> ::std::borrow::Cow<'static, str> {

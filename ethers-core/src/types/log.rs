@@ -337,6 +337,12 @@ impl Filter {
         self
     }
 
+    /// Sets multiple topics
+    pub fn multiple_topics0(mut self, topics: Vec<H256>) -> Self {
+        self.topics[0] = Some(ValueOrArray::Array(topics));
+        self
+    }
+
     /// Sets the 1st indexed topic
     #[must_use]
     pub fn topic1<T: Into<ValueOrArray<H256>>>(mut self, topic: T) -> Self {

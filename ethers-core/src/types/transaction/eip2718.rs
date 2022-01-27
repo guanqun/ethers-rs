@@ -162,6 +162,25 @@ impl TypedTransaction {
         };
     }
 
+    pub fn set_gas_price_for_base_and_priority<T: Into<U256>, U: Into<U256>>(
+        &mut self,
+        base_fee_price: T,
+        priority_fee_price: U,
+    ) {
+        let base_fee_price = base_fee_price.into();
+        let priority_fee_price = priority_fee_price.into();
+
+        match self {
+            Eip1559(inner) => {
+                inner.max_priority_fee_per_gas = Some(priority_fee_price);
+                inner.max_fee_per_gas = Some(base_fee_price + priority_fee_price);
+            }
+            _ => {
+                // do nothing here
+            }
+        };
+    }
+
     pub fn data(&self) -> Option<&Bytes> {
         match self {
             Legacy(inner) => inner.data.as_ref(),

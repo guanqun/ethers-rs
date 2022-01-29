@@ -1,6 +1,6 @@
 // Adapted from https://github.com/tomusdrw/rust-web3/blob/master/src/types/log.rs
 use crate::{
-    types::{Address, BlockNumber, Bytes, H256, U256, U64},
+    types::{Address, BlockId, BlockNumber, Bytes, H256, U256, U64},
     utils::keccak256,
 };
 use serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
@@ -73,6 +73,15 @@ impl From<BlockNumber> for FilterBlockOption {
     fn from(block: BlockNumber) -> Self {
         let block = Some(block);
         FilterBlockOption::Range { from_block: block, to_block: block }
+    }
+}
+
+impl From<BlockId> for FilterBlockOption {
+    fn from(block_id: BlockId) -> Self {
+        match block_id {
+            BlockId::Hash(block_hash) => block_hash.into(),
+            BlockId::Number(block_number) => block_number.into(),
+        }
     }
 }
 
@@ -404,7 +413,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::serialize;
+    use crate::{types::BlockId, utils::serialize};
     use serde_json::json;
 
     #[test]
@@ -466,5 +475,15 @@ mod tests {
         // 1 & 2 & 3
         let ser = serialize(&filter.topic1(t1).topic2(t2).topic3(t3));
         assert_eq!(ser, json!({ "address" : addr, "topics": [t0, t1_padded, t2, t3_padded]}));
+    }
+
+    #[test]
+    fn from_block_id_to_filter_option() {
+        let block_id: BlockId = 1234.into();
+        let filter_block_option: FilterBlockOption = block_id.into();
+        assert_eq!(
+            filter_block_option,
+            FilterBlockOption::Range { from_block: Some(1234.into()), to_block: Some(1234.into()) }
+        )
     }
 }

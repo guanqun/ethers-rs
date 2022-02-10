@@ -23,7 +23,8 @@ use ethers_core::{
     utils,
 };
 use hex::FromHex;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Serialize, Deserialize};
+use serde_json::{json, Value};
 use thiserror::Error;
 use url::{ParseError, Url};
 
@@ -673,6 +674,42 @@ impl<P: JsonRpcClient> Middleware for Provider<P> {
             .try_collect()?;
 
         Ok(ret)
+    }
+
+    async fn simulate_logs(
+        &self,
+        tx: &Transaction,
+        target_block_number: BlockNumber,
+        state_block: BlockId,
+    ) -> Result<(H256, Vec<Log>), Self::Error> {
+        let rlp = utils::serialize(&tx.rlp());
+        let target_block_number = utils::serialize(&target_block_number);
+        let state_block = utils::serialize(&state_block);
+
+        let response: Value = self
+            .request(
+                "eth_simulateLogs",
+                json!([{
+                    "tx": rlp,
+                    "blockNumber": target_block_number,
+                    "stateBlockNumber": state_block
+                }]),
+            )
+            .await?;
+
+        if !response["error"].is_null() {
+            Err(ProviderError::CustomError("tx error".into()))
+        } else {
+            #[derive(Debug, Deserialize)]
+            struct Wrapper {
+                #[serde(rename = "txHash")]
+                tx_hash: H256,
+                logs: Vec<Log>,
+            }
+
+            let ret: Wrapper = serde_json::from_value(response)?;
+            Ok((ret.tx_hash, ret.logs))
+        }
     }
 
     /// Returns the deployed code at a given address

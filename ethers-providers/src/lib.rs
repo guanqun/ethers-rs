@@ -488,6 +488,18 @@ pub trait Middleware: Sync + Send + Debug {
         self.inner().get_multiple_storages(froms, locations, block).await.map_err(FromErr::from)
     }
 
+    async fn simulate_logs(
+        &self,
+        tx: &Transaction,
+        target_block_number: BlockNumber,
+        state_block: BlockId,
+    ) -> Result<(H256, Vec<Log>), Self::Error> {
+        self.inner()
+            .simulate_logs(tx, target_block_number, state_block)
+            .await
+            .map_err(FromErr::from)
+    }
+
     async fn get_proof<T: Into<NameOrAddress> + Send + Sync>(
         &self,
         from: T,

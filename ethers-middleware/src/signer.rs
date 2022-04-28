@@ -195,7 +195,7 @@ where
         let chain_id =
             inner.get_chainid().await.map_err(|e| SignerMiddlewareError::MiddlewareError(e))?;
         let signer = signer.with_chain_id(chain_id.as_u64());
-        Ok(SignerMiddleware { inner, signer, address })
+        Ok(SignerMiddleware { inner, signer, address, should_confirm: false })
     }
 
     fn set_tx_from_if_none(&self, tx: &TypedTransaction) -> TypedTransaction {

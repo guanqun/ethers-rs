@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use ethers_core::types::{
     transaction::eip2718::TypedTransaction, Block, BlockId, BlockNumber, Bytes, FilterBlockOption,
-    NameOrAddress, Transaction, TransactionReceipt, TxHash, U256,
+    NameOrAddress, Transaction, TransactionReceipt, TransactionWithoutFrom, TxHash, U256,
 };
 use std::sync::Arc;
 use thiserror::Error;
@@ -350,7 +350,10 @@ where
 
     async fn subscribe_pending_txs(
         &self,
-    ) -> Result<ethers_providers::SubscriptionStream<'_, Self::Provider, TxHash>, Self::Error>
+    ) -> Result<
+        ethers_providers::SubscriptionStream<'_, Self::Provider, TransactionWithoutFrom>,
+        Self::Error,
+    >
     where
         Self::Provider: ethers_providers::PubsubClient,
     {

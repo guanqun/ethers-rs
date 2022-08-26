@@ -10,6 +10,110 @@ use crate::{
 use rlp::{Decodable, DecoderError, RlpStream};
 use serde::{Deserialize, Serialize};
 
+/// Details of a signed pending transaction
+/// Note it's similar with `Transaction`, the only difference is that
+/// it doesn't contain the `from` field.
+/// Ideally, we could recover `from` field from v, r, s
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct TransactionWithoutFrom {
+    /// The transaction's hash
+    pub hash: H256,
+
+    /// The transaction's nonce
+    pub nonce: U256,
+
+    /// Block hash. None when pending.
+    #[serde(rename = "blockHash")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub block_hash: Option<H256>,
+
+    /// Block number. None when pending.
+    #[serde(rename = "blockNumber")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub block_number: Option<U64>,
+
+    /// Transaction Index. None when pending.
+    #[serde(rename = "transactionIndex")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transaction_index: Option<U64>,
+
+    /// Recipient (None when contract creation)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to: Option<Address>,
+
+    /// Transfered value
+    pub value: U256,
+
+    /// Gas Price, null for Type 2 transactions
+    #[serde(rename = "gasPrice")]
+    pub gas_price: Option<U256>,
+
+    /// Gas amount
+    pub gas: U256,
+
+    /// Input data
+    pub input: Bytes,
+
+    /// ECDSA recovery id
+    pub v: U64,
+
+    /// ECDSA signature r
+    pub r: U256,
+
+    /// ECDSA signature s
+    pub s: U256,
+
+    /////////////////  Celo-specific transaction fields /////////////////
+    /// The currency fees are paid in (None for native currency)
+    #[cfg(feature = "celo")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "celo")))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "feeCurrency")]
+    pub fee_currency: Option<Address>,
+
+    /// Gateway fee recipient (None for no gateway fee paid)
+    #[cfg(feature = "celo")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "celo")))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "gatewayFeeRecipient")]
+    pub gateway_fee_recipient: Option<Address>,
+
+    /// Gateway fee amount (None for no gateway fee paid)
+    #[cfg(feature = "celo")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "celo")))]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "gatewayFee")]
+    pub gateway_fee: Option<U256>,
+
+    // EIP2718
+    /// Transaction type, Some(2) for EIP-1559 transaction,
+    /// Some(1) for AccessList transaction, None for Legacy
+    #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
+    pub transaction_type: Option<U64>,
+
+    // EIP2930
+    #[serde(rename = "accessList", default, skip_serializing_if = "Option::is_none")]
+    pub access_list: Option<AccessList>,
+
+    #[serde(rename = "maxPriorityFeePerGas", default, skip_serializing_if = "Option::is_none")]
+    /// Represents the maximum tx fee that will go to the miner as part of the user's
+    /// fee payment. It serves 3 purposes:
+    /// 1. Compensates miners for the uncle/ommer risk + fixed costs of including transaction in a
+    /// block; 2. Allows users with high opportunity costs to pay a premium to miners;
+    /// 3. In times where demand exceeds the available block space (i.e. 100% full, 30mm gas),
+    /// this component allows first price auctions (i.e. the pre-1559 fee model) to happen on the
+    /// priority fee.
+    ///
+    /// More context [here](https://hackmd.io/@q8X_WM2nTfu6nuvAzqXiTQ/1559-wallets)
+    pub max_priority_fee_per_gas: Option<U256>,
+
+    #[serde(rename = "maxFeePerGas", default, skip_serializing_if = "Option::is_none")]
+    /// Represents the maximum amount that a user is willing to pay for their tx (inclusive of
+    /// baseFeePerGas and maxPriorityFeePerGas). The difference between maxFeePerGas and
+    /// baseFeePerGas + maxPriorityFeePerGas is “refunded” to the user.
+    pub max_fee_per_gas: Option<U256>,
+
+    #[serde(rename = "chainId", default, skip_serializing_if = "Option::is_none")]
+    pub chain_id: Option<U256>,
+}
+
 /// Details of a signed transaction
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Transaction {

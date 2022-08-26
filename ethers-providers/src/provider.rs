@@ -17,8 +17,8 @@ use ethers_core::{
         transaction::{eip2718::TypedTransaction, eip2930::AccessListWithGasUsed},
         Address, Block, BlockId, BlockNumber, BlockTrace, Bytes, EIP1186ProofResponse, FeeHistory,
         Filter, Log, NameOrAddress, Selector, Signature, Trace, TraceFilter, TraceType,
-        Transaction, TransactionReceipt, TransactionRequest, TxHash, TxpoolContent, TxpoolInspect,
-        TxpoolStatus, H256, U256, U64,
+        Transaction, TransactionReceipt, TransactionRequest, TransactionWithoutFrom, TxHash,
+        TxpoolContent, TxpoolInspect, TxpoolStatus, H256, U256, U64,
     },
     utils,
 };
@@ -1164,7 +1164,7 @@ impl<P: JsonRpcClient> Middleware for Provider<P> {
 
     async fn subscribe_pending_txs(
         &self,
-    ) -> Result<SubscriptionStream<'_, P, TxHash>, ProviderError>
+    ) -> Result<SubscriptionStream<'_, P, TransactionWithoutFrom>, ProviderError>
     where
         P: PubsubClient,
     {

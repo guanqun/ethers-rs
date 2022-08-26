@@ -12,7 +12,7 @@ pub use transaction::{
     eip1559::Eip1559TransactionRequest,
     eip2930::Eip2930TransactionRequest,
     request::TransactionRequest,
-    response::{Transaction, TransactionReceipt},
+    response::{Transaction, TransactionReceipt, TransactionWithoutFrom},
 };
 
 mod address_or_bytes;

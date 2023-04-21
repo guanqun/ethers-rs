@@ -47,7 +47,7 @@ impl SolData {
             Ok((units, _)) => {
                 for unit in units.0 {
                     match unit {
-                        SourceUnitPart::PragmaDirective(loc, _, pragma, value) => {
+                        SourceUnitPart::PragmaDirective(loc, pragma, value) => {
                             if pragma.name == "solidity" {
                                 // we're only interested in the solidity version pragma
                                 version = Some(SolDataUnit::new(value.string.clone(), loc.into()));
@@ -58,7 +58,7 @@ impl SolData {
                                     Some(SolDataUnit::new(value.string.clone(), loc.into()));
                             }
                         }
-                        SourceUnitPart::ImportDirective(_, import) => {
+                        SourceUnitPart::ImportDirective(import) => {
                             let (import, loc) = match import {
                                 Import::Plain(s, l) => (s, l),
                                 Import::GlobalSymbol(s, _, l) => (s, l),

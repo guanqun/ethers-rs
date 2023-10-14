@@ -89,8 +89,6 @@ pub use ethers_contract as contract;
 #[doc(inline)]
 pub use ethers_core as core;
 #[doc(inline)]
-pub use ethers_etherscan as etherscan;
-#[doc(inline)]
 pub use ethers_middleware as middleware;
 #[doc(inline)]
 pub use ethers_providers as providers;
@@ -110,8 +108,6 @@ pub mod prelude {
     pub use super::contract::*;
 
     pub use super::core::{types::*, *};
-
-    pub use super::etherscan::*;
 
     pub use super::middleware::*;
 

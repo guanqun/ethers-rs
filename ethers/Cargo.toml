@@ -46,14 +46,12 @@ optimism = [
 
 rustls = [
     "ethers-contract/rustls",
-    "ethers-etherscan/rustls",
     "ethers-middleware/rustls",
     "ethers-providers/rustls",
     "ethers-solc?/rustls",
 ]
 openssl = [
     "ethers-contract/openssl",
-    "ethers-etherscan/openssl",
     "ethers-middleware/openssl",
     "ethers-providers/openssl",
     "ethers-solc?/openssl",
@@ -76,7 +74,7 @@ abigen = ["ethers-contract/abigen"]
 abigen-online = ["ethers-contract/abigen-online"]
 
 # ethers-solc
-ethers-solc = ["dep:ethers-solc", "ethers-etherscan/ethers-solc"]
+ethers-solc = ["dep:ethers-solc"]
 solc-full = ["ethers-solc?/full"]
 solc-tests = ["ethers-solc?/tests"]
 
@@ -88,7 +86,6 @@ solc-sha2-asm = []
 [dependencies]
 ethers-contract = { workspace = true, features = ["providers"] }
 ethers-core.workspace = true
-ethers-etherscan.workspace = true
 ethers-middleware.workspace = true
 ethers-providers.workspace = true
 ethers-signers.workspace = true

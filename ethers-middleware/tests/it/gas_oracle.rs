@@ -3,11 +3,6 @@ use ethers_core::{
     types::*,
     utils::{parse_ether, Anvil},
 };
-use ethers_etherscan::Client;
-use ethers_middleware::gas_oracle::{
-    BlockNative, Etherchain, Etherscan, GasCategory, GasNow, GasOracle, GasOracleError,
-    GasOracleMiddleware, Polygon, ProviderOracle, Result,
-};
 use ethers_providers::{Http, Middleware, Provider};
 
 #[derive(Debug)]

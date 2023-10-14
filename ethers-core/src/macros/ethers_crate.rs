@@ -215,7 +215,6 @@ impl ProjectEnvironment {
 )]
 #[strum(serialize_all = "kebab-case")]
 pub enum EthersCrate {
-    EthersAddressbook,
     EthersContract,
     EthersContractAbigen,
     EthersContractDerive,
@@ -244,7 +243,6 @@ impl EthersCrate {
     #[inline]
     pub const fn crate_name(self) -> &'static str {
         match self {
-            Self::EthersAddressbook => "ethers-addressbook",
             Self::EthersContract => "ethers-contract",
             Self::EthersContractAbigen => "ethers-contract-abigen",
             Self::EthersContractDerive => "ethers-contract-derive",
@@ -261,7 +259,6 @@ impl EthersCrate {
     #[inline]
     pub const fn path_name(self) -> &'static str {
         match self {
-            Self::EthersAddressbook => "::ethers_addressbook",
             Self::EthersContract => "::ethers_contract",
             Self::EthersContractAbigen => "::ethers_contract_abigen",
             Self::EthersContractDerive => "::ethers_contract_derive",
@@ -282,7 +279,6 @@ impl EthersCrate {
             Self::EthersContractAbigen => "::ethers::contract", // partially
             Self::EthersContractDerive => "::ethers::contract",
 
-            Self::EthersAddressbook => "::ethers::addressbook",
             Self::EthersContract => "::ethers::contract",
             Self::EthersCore => "::ethers::core",
             Self::EthersEtherscan => "::ethers::etherscan",

@@ -85,8 +85,6 @@
 #![doc(test(no_crate_inject, attr(deny(rust_2018_idioms), allow(dead_code, unused_variables))))]
 
 #[doc(inline)]
-pub use ethers_addressbook as addressbook;
-#[doc(inline)]
 pub use ethers_contract as contract;
 #[doc(inline)]
 pub use ethers_core as core;
@@ -109,8 +107,6 @@ pub use ethers_core::{abi, types, utils};
 #[doc(hidden)]
 #[allow(unknown_lints, ambiguous_glob_reexports)]
 pub mod prelude {
-    pub use super::addressbook::contract;
-
     pub use super::contract::*;
 
     pub use super::core::{types::*, *};

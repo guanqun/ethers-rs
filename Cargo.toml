@@ -83,7 +83,7 @@ futures-util = "0.3.28"
 futures-executor = "0.3.28"
 futures-channel = "0.3.28"
 futures-locks = { version = "0.7.1", default-features = false }
-futures-timer = { version = "3.0.2", default-features = false, features = ["wasm-bindgen"] }
+futures-timer = { version = "3.0.2", default-features = false }
 pin-project = "1.1"
 reqwest = { version = "0.11.19", default-features = false }
 url = { version = "2.4", default-features = false }
